@@ -27,18 +27,19 @@ class UserObserver extends ReLogoObserver{
 		def retailers = retailers()
 		def customers = customers()
 
-		ask(factories[0]){ setup(-12, 12, 40.0) }
-		ask(factories[1]){ setup(0, 12, 20.0) }
-		ask(factories[2]){ setup(12, 12, 0.0) }
-		ask(distributors[0]){ setup(-12, 6, 40.0) }
-		ask(distributors[1]){ setup(0, 6, 20.0) }
-		ask(distributors[2]){ setup(12, 6, 0.0) }
-		ask(wholesalers[0]){ setup(-12, 0 , 40.0) }
-		ask(wholesalers[1]){ setup(0, 0, 20.0) }
-		ask(wholesalers[2]){ setup(12, 0, 0.0) }
-		ask(retailers[0]){ setup(-12, -6, 40.0) }
-		ask(retailers[1]){ setup(0, -6, 20.0) }
-		ask(retailers[2]){ setup(12, -6, 0.0) }
+		Random random = new Random()
+		ask(factories[0]){ setup(-12, 12, randomInitialStock(random)) }
+		ask(factories[1]){ setup(0, 12, randomInitialStock(random)) }
+		ask(factories[2]){ setup(12, 12, randomInitialStock(random)) }
+		ask(distributors[0]){ setup(-12, 6, randomInitialStock(random)) }
+		ask(distributors[1]){ setup(0, 6, randomInitialStock(random)) }
+		ask(distributors[2]){ setup(12, 6, randomInitialStock(random)) }
+		ask(wholesalers[0]){ setup(-12, 0 , randomInitialStock(random)) }
+		ask(wholesalers[1]){ setup(0, 0, randomInitialStock(random)) }
+		ask(wholesalers[2]){ setup(12, 0, randomInitialStock(random)) }
+		ask(retailers[0]){ setup(-12, -6, randomInitialStock(random)) }
+		ask(retailers[1]){ setup(0, -6, randomInitialStock(random)) }
+		ask(retailers[2]){ setup(12, -6, randomInitialStock(random)) }
 		ask(customers[0]) { setup(-12, -12, 0.0) }
 		ask(customers[1]) { setup(0, -12, 0.0) }
 		ask(customers[2]) { setup(12, -12, 0.0) }
@@ -59,6 +60,9 @@ class UserObserver extends ReLogoObserver{
 		ask(chainLevels()){makeOrders()}
 		ask(chainLevels()){updateDownstreamTrust()}
 		ask(chainLevels()){refreshTrustLinks(visibility)}
+		if (ticks() == 100) {
+			stop()
+		}
 	}
 
 	def toggleTrustVisibility(){
@@ -278,4 +282,9 @@ class UserObserver extends ReLogoObserver{
 	def getRetailer2TrustFromDownstreams(){
 		return retailers()[2].getCurrentTrustFromDownstreams()
 	}
+	
+	def randomInitialStock(Random random){
+		return 1.0 * random.nextInt(41)
+	}
+	
 }
