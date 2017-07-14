@@ -13,7 +13,6 @@ import repast.simphony.relogo.schedule.Setup
 
 class Wholesaler extends ChainLevel {
 	def setup(x, y, initialStock){
-		this.initialProductPipeline = [4.0]
 		this.upstreamLevel = distributors()
 		this.downstreamLevel = retailers()
 		super.setup(x, y, initialStock)

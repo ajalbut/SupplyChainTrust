@@ -20,18 +20,11 @@ class ChainLevel extends ReLogoTurtle {
 	def supplyRule
 	def desiredStock = 0.0
 	def currentStock
-	def expectedDemand
+	def expectedDemand = 12.0
 
-	Map ordersToFulfill = [:]
-	Map ordersSent = [:]
-	Map shipmentsSent = [:]
+	Map backlog = [:]
 	Map productPipelines = [:]
 	Map orderPipelines = [:]
-	Map lastOrdersToFulfill = [:]
-	Map lastOrdersSent = [:]
-	Map lastShipmentsSent = [:]
-	Map lastProductPipelines = [:]
-	Map lastOrderPipelines = [:]
 	Map ordersReceived = [:]
 	Map ordersSentChecklist = [:]
 	Map shipmentsReceivedChecklist = [:]
@@ -45,34 +38,37 @@ class ChainLevel extends ReLogoTurtle {
 	def upstreamLevel
 	def downstreamLevel
 
-	def initialProductPipeline = [4.0]
-	def initialOrderPipeline = []
+	def initialProductPipeline = [4.0, 4.0]
+	def initialOrderPipeline = [4.0]
 	def initialOrdersSentChecklist = [4.0, 4.0, 4.0]
 	def initialShipmentsReceivedChecklist = [4.0, 4.0]
 	def initialShipmentsSentChecklist = [4.0, 4.0, 4.0]
 	def initialOrdersReceivedChecklist = [4.0]
+	def pipelineSize = initialProductPipeline.size() + initialOrderPipeline.size()
 
 	def setup(x, y, initialStock){
 		setxy(x,y)
 		setShape("square")
 		setColor(yellow())
 		this.currentStock = initialStock
-		this.expectedDemand = 12.0
+
 		for (ChainLevel upstream in this.upstreamLevel) {
-			this.lastOrdersSent[upstream.getWho()] = 4.0
-			this.lastProductPipelines[upstream.getWho()] = initialProductPipeline.clone()
 			if(upstream.getWho() != this.getWho()) {
 				this.ordersSentChecklist[upstream.getWho()] = initialOrdersSentChecklist.clone()
 				this.shipmentsReceivedChecklist[upstream.getWho()] = initialShipmentsReceivedChecklist.clone()
 				this.trustUpstreams[upstream.getWho()] = 1.0
 				def route = createLinkFrom(upstream, { hideLink()})
 				route.color = scaleColor(red(), 1.0, 0.0, 1.0)
+			} else {
+				this.initialProductPipeline = [12.0, 12.0]
+				this.pipelineSize = this.initialProductPipeline.size()
 			}
+			this.productPipelines[upstream.getWho()] = initialProductPipeline.clone()
 		}
 		for (ChainLevel downstream in this.downstreamLevel) {
-			this.lastOrdersToFulfill[downstream.getWho()] = 0.0
-			this.lastShipmentsSent[downstream.getWho()] = 4.0
-			this.lastOrderPipelines[downstream.getWho()] = initialOrderPipeline.clone()
+			this.ordersReceived[downstream.getWho()] = 4.0
+			this.backlog[downstream.getWho()] = 0.0
+			this.orderPipelines[downstream.getWho()] = initialOrderPipeline.clone()
 			this.shipmentsSentChecklist[downstream.getWho()] = initialShipmentsSentChecklist.clone()
 			this.ordersReceivedChecklist[downstream.getWho()] = initialOrdersReceivedChecklist.clone()
 			this.trustDownstreams[downstream.getWho()] = 1.0
@@ -81,8 +77,6 @@ class ChainLevel extends ReLogoTurtle {
 
 	def receiveShipments(){
 		for (ChainLevel upstream in this.upstreamLevel) {
-			this.productPipelines[upstream.getWho()] = this.lastProductPipelines[upstream.getWho()].clone()
-			this.productPipelines[upstream.getWho()].add(0, upstream.lastShipmentsSent[this.getWho()])
 			def shipmentReceived = this.productPipelines[upstream.getWho()].pop()
 			this.currentStock += shipmentReceived
 			if(upstream.getWho() != this.getWho()) {
@@ -91,32 +85,31 @@ class ChainLevel extends ReLogoTurtle {
 		}
 	}
 
-	def receiveOrders(){
-		for (ChainLevel downstream in this.downstreamLevel) {
-			this.orderPipelines[downstream.getWho()] = this.lastOrderPipelines[downstream.getWho()].clone()
-			this.orderPipelines[downstream.getWho()].add(0, downstream.lastOrdersSent[this.getWho()])
-			def orderReceived = this.orderPipelines[downstream.getWho()].pop()
-			this.ordersToFulfill[downstream.getWho()] = round(1000000 * ((this.lastOrdersToFulfill[downstream.getWho()] + orderReceived) / 1000000))
-			this.ordersReceived[downstream.getWho()] = orderReceived
-			this.ordersReceivedChecklist[downstream.getWho()].add(0, this.ordersReceived[downstream.getWho()])
-		}
-	}
-
-	def fulfillOrders(){
-		def totalOrdersToFulfill = this.ordersToFulfill.values().sum()
+	def fillOrders(){
+		def totalOrdersToFill = this.backlog.values().sum() + this.ordersReceived.values().sum()
 		def totalTrustDownstreams = this.trustDownstreams.values().sum()
-		def totalShipmentsSent = (this.currentStock >= totalOrdersToFulfill) ? totalOrdersToFulfill : this.currentStock
+		def totalShipmentsSent = (this.currentStock >= totalOrdersToFill) ? totalOrdersToFill : this.currentStock
 		for (ChainLevel downstream in this.downstreamLevel) {
 			def shipmentSent
 			if (this.supplyRule == 'BACKORDER') {
-				shipmentSent = totalOrdersToFulfill ? totalShipmentsSent * this.ordersToFulfill[downstream.getWho()] / totalOrdersToFulfill : 0.0
+				def ordersToFill = this.backlog[downstream.getWho()]  + this.ordersReceived[downstream.getWho()]
+				shipmentSent = totalOrdersToFill ? totalShipmentsSent * ordersToFill / totalOrdersToFill : 0.0
 			} else {
 				shipmentSent = totalTrustDownstreams ? totalShipmentsSent * this.trustDownstreams[downstream.getWho()] / totalTrustDownstreams : 0.0
 			}
+			downstream.productPipelines[this.getWho()].add(0, shipmentSent)
+			this.backlog[downstream.getWho()] = Math.max(0.0, this.backlog[downstream.getWho()] + this.ordersReceived[downstream.getWho()] - shipmentSent)
 			this.currentStock -= shipmentSent
-			this.ordersToFulfill[downstream.getWho()] = Math.max(0.0, this.ordersToFulfill[downstream.getWho()] - shipmentSent)
-			this.shipmentsSent[downstream.getWho()] = shipmentSent
 			this.shipmentsSentChecklist[downstream.getWho()].add(0, shipmentSent)
+		}
+	}
+
+	def receiveOrders(){
+		this.expectedDemand = this.THETA * this.ordersReceived.values().sum() + (1 - this.THETA) * this.expectedDemand
+		for (ChainLevel downstream in this.downstreamLevel) {
+			def orderReceived = this.orderPipelines[downstream.getWho()].pop()
+			this.ordersReceived[downstream.getWho()] = orderReceived
+			this.ordersReceivedChecklist[downstream.getWho()].add(0, this.ordersReceived[downstream.getWho()])
 		}
 	}
 
@@ -126,19 +119,19 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def calculateTotalOrderSize() {
+		def desiredSupplyLine = this.pipelineSize * this.expectedDemand
+
 		def supplyLine = 0.0
 		for (ChainLevel upstream in this.upstreamLevel) {
 			supplyLine += this.productPipelines[upstream.getWho()].sum()
 			if(upstream.getWho() != this.getWho()) {
-				supplyLine += upstream.lastOrdersToFulfill[this.getWho()]
-				//supplyLine += upstream.lastOrderPipelines[this.getWho()].sum()
+				supplyLine += upstream.backlog[this.getWho()]
+				supplyLine += upstream.ordersReceived[this.getWho()]
 			}
 		}
 
-		this.expectedDemand = this.THETA * this.ordersReceived.values().sum() + (1 - this.THETA) * this.expectedDemand
-		def desiredSupplyLine = 3 * this.expectedDemand
-		def Q = this.desiredStock + this.BETA * desiredSupplyLine
-		def totalOrders = this.expectedDemand + this.ALPHA * (Q - this.currentStock - this.BETA * supplyLine)
+		def effectiveStock = this.currentStock - this.backlog.values().sum()
+		def totalOrders = this.expectedDemand + this.ALPHA * (this.desiredStock - effectiveStock + this.BETA * (desiredSupplyLine - supplyLine))
 		return Math.max(0.0, totalOrders)
 	}
 
@@ -148,10 +141,11 @@ class ChainLevel extends ReLogoTurtle {
 		def totalTrustUpstreams = 0.0
 		for (ChainLevel upstream in this.upstreamLevel) {
 			if (this.supplyRule == 'BACKORDER') {
-				if (!upstream.lastOrdersToFulfill[this.getWho()]) {
+				def ordersToFill = upstream.backlog[this.getWho()]
+				if (1000000 * round(ordersToFill) / 1000000 == 0.0) {
 					freeUpstreams.push(upstream.getWho())
 				} else {
-					inverseBackOrderSum += 1 / upstream.lastOrdersToFulfill[this.getWho()]
+					inverseBackOrderSum += 1 / ordersToFill
 				}
 			} else {
 				totalTrustUpstreams += this.trustUpstreams[upstream.getWho()]
@@ -160,20 +154,21 @@ class ChainLevel extends ReLogoTurtle {
 		for (ChainLevel upstream in this.upstreamLevel) {
 			def orderSent
 			if (this.supplyRule == 'BACKORDER') {
+				def ordersToFill = upstream.backlog[this.getWho()]
 				if(length(freeUpstreams)) {
 					orderSent = (freeUpstreams.contains(upstream.getWho())) ? totalOrdersSent / length(freeUpstreams) : 0.0
 				} else {
-					orderSent = totalOrdersSent * (1 / upstream.lastOrdersToFulfill[this.getWho()]) / inverseBackOrderSum
+					orderSent = totalOrdersSent * (1 / ordersToFill) / inverseBackOrderSum
 				}
 			} else {
 				orderSent = totalTrustUpstreams ? totalOrdersSent * this.trustUpstreams[upstream.getWho()] / totalTrustUpstreams : 0.0
 			}
+			upstream.orderPipelines[this.getWho()].add(0, orderSent)
 			this.ordersSentChecklist[upstream.getWho()].add(0, orderSent)
-			this.ordersSent[upstream.getWho()] = orderSent
 		}
 	}
 
-	def updateTrust(){
+	def updateUpstreamTrust(){
 		def maxTrustUpstreams = 0.0
 		for (ChainLevel upstream in this.upstreamLevel) {
 			if(upstream.getWho() != this.getWho()) {
@@ -194,13 +189,10 @@ class ChainLevel extends ReLogoTurtle {
 				}
 			}
 		}
-		for (ChainLevel upstream in this.upstreamLevel) {
-			if(upstream.getWho() != this.getWho()) {
-				this.trustUpstreams[upstream.getWho()] = this.trustUpstreams[upstream.getWho()] / maxTrustUpstreams
-			}
-		}
 		this.maxTrustUpstreams = maxTrustUpstreams
+	}
 
+	def updateDownstreamTrust(){
 		def maxTrustDownstreams = 0.0
 		for (ChainLevel downstream in this.downstreamLevel) {
 			def shipmentToCheck = this.shipmentsSentChecklist[downstream.getWho()].pop()
@@ -220,33 +212,12 @@ class ChainLevel extends ReLogoTurtle {
 			}
 		}
 		this.maxTrustDownstreams = maxTrustDownstreams
-		for (ChainLevel downstream in this.downstreamLevel) {
-			this.trustDownstreams[downstream.getWho()] = this.trustDownstreams[downstream.getWho()] / maxTrustDownstreams
-		}
-	}
-
-	def updateState(){
-		for (ChainLevel upstream in this.upstreamLevel) {
-			this.lastOrdersSent[upstream.getWho()] = this.ordersSent[upstream.getWho()]
-			this.lastProductPipelines[upstream.getWho()] = this.productPipelines[upstream.getWho()].clone()
-		}
-		for (ChainLevel downstream in this.downstreamLevel) {
-			this.lastOrdersToFulfill[downstream.getWho()] = this.ordersToFulfill[downstream.getWho()]
-			this.lastShipmentsSent[downstream.getWho()] = this.shipmentsSent[downstream.getWho()]
-			this.lastOrderPipelines[downstream.getWho()] = this.orderPipelines[downstream.getWho()].clone()
-		}
-
-		label = "" + round(100 * this.currentStock) / 100
-		def totalOrdersToFullfill = this.ordersToFulfill.values().sum()
-		if (totalOrdersToFullfill) {
-			label += " , " + round(100 * totalOrdersToFullfill) / 100
-		}
 	}
 
 	def getStockMinusBackorder() {
 		def stockMinusBackorder = this.currentStock
-		if (this.lastOrdersToFulfill.values().size()) {
-			stockMinusBackorder -= this.lastOrdersToFulfill.values().sum()
+		if (this.backlog.values().size()) {
+			stockMinusBackorder -= this.backlog.values().sum()
 		}
 		return stockMinusBackorder
 	}
@@ -270,6 +241,12 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def refreshTrustLinks(visibility) {
+		label = "" + round(100 * this.currentStock) / 100
+		def totalOrdersToFullfill = this.backlog.values().sum()
+		if (totalOrdersToFullfill) {
+			label += " , " + round(100 * totalOrdersToFullfill) / 100
+		}
+
 		ask(myOutLinks()){die()}
 		if (visibility == 'upstream') {
 			for (ChainLevel upstream in this.upstreamLevel) {

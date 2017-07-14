@@ -51,16 +51,14 @@ class UserObserver extends ReLogoObserver{
 		def rule = supplyRule
 
 		tick()
-		ask(chainLevels()){
-			setSupplyRule(rule)
-			receiveShipments()
-			receiveOrders()
-			updateTrust()
-			fulfillOrders()
-			makeOrders()
-			refreshTrustLinks(visibility)
-		}
-		ask(chainLevels()){ updateState() }
+		ask(chainLevels()){setSupplyRule(rule)}
+		ask(chainLevels()){receiveShipments()}
+		ask(chainLevels()){updateUpstreamTrust()}
+		ask(chainLevels()){fillOrders()}
+		ask(chainLevels()){receiveOrders()}
+		ask(chainLevels()){makeOrders()}
+		ask(chainLevels()){updateDownstreamTrust()}
+		ask(chainLevels()){refreshTrustLinks(visibility)}
 	}
 
 	def toggleTrustVisibility(){
@@ -74,10 +72,10 @@ class UserObserver extends ReLogoObserver{
 
 	def getGlobalUtility() {
 		def stepUtility = 0
-		ask(factories()){ stepUtility += 0.5 * currentStock + lastOrdersToFulfill.values().sum()}
-		ask(distributors()){ stepUtility += 0.5 * currentStock + lastOrdersToFulfill.values().sum()}
-		ask(wholesalers()){ stepUtility += 0.5 * currentStock + lastOrdersToFulfill.values().sum()}
-		ask(retailers()){ stepUtility += 0.5 * currentStock + lastOrdersToFulfill.values().sum()}
+		ask(factories()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
+		ask(distributors()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
+		ask(wholesalers()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
+		ask(retailers()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
 		return stepUtility
 	}
 

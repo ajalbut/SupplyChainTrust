@@ -13,7 +13,6 @@ import repast.simphony.relogo.schedule.Setup
 
 class Customer extends ChainLevel {
 	def setup(x, y, initialStock){
-		this.initialProductPipeline = [4.0]
 		this.upstreamLevel = retailers()
 		this.downstreamLevel = []
 		super.setup(x, y, initialStock)
@@ -21,11 +20,11 @@ class Customer extends ChainLevel {
 
 	def receiveOrders(){}
 
-	def fullfillOrders(){}
+	def fillOrders(){}
 
 	def makeOrders(){
 		def totalOrderSize
-		if (ticks() >= 4) {
+		if (ticks() > 4) {
 			totalOrderSize = 24.0
 		} else {
 			totalOrderSize = 12.0
