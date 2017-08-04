@@ -2,6 +2,9 @@ package SupplyChainTrust.relogo
 
 import static repast.simphony.relogo.Utility.*;
 import static repast.simphony.relogo.UtilityG.*;
+
+import repast.simphony.engine.environment.RunEnvironment;
+import repast.simphony.parameter.Parameters
 import repast.simphony.relogo.Stop;
 import repast.simphony.relogo.Utility;
 import repast.simphony.relogo.UtilityG;
@@ -46,6 +49,8 @@ class UserObserver extends ReLogoObserver{
 	}
 
 	def visibility = 'upstream'
+	Parameters p = RunEnvironment.getInstance().getParameters();
+	def supplyRule = p.getValue("supplyRule")
 
 	@Go
 	def go(){
