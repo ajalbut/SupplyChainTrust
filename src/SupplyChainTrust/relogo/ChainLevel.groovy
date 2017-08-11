@@ -18,9 +18,10 @@ class ChainLevel extends ReLogoTurtle {
 	static THETA = 0.5
 
 	def supplyRule
-	def desiredStock = 0.0
+	def agentsPerLevel
+	def desiredStock
 	def currentStock
-	def expectedDemand = 12.0
+	def expectedDemand
 
 	Map backlog = [:]
 	Map productPipelines = [:]
@@ -46,10 +47,14 @@ class ChainLevel extends ReLogoTurtle {
 	def initialOrdersReceivedChecklist = [4.0]
 	def pipelineSize = initialProductPipeline.size() + initialOrderPipeline.size()
 
-	def setup(x, y, initialStock){
+	def setup(x, y, initialStock, supplyRule, agentsPerLevel){
 		setxy(x,y)
 		setShape("square")
+		this.supplyRule = supplyRule
+		this.agentsPerLevel = agentsPerLevel
 		this.currentStock = initialStock
+		this.desiredStock = 0.0
+		this.expectedDemand = 4 * this.agentsPerLevel
 
 		for (ChainLevel upstream in this.upstreamLevel) {
 			if(upstream.getWho() != this.getWho()) {
@@ -59,10 +64,10 @@ class ChainLevel extends ReLogoTurtle {
 				def route = createLinkFrom(upstream, { hideLink()})
 				route.color = scaleColor(red(), 1.0, 0.0, 1.0)
 			} else {
-				this.initialProductPipeline = [12.0, 12.0]
+				this.initialProductPipeline = [4.0, 4.0].collect{it * this.agentsPerLevel}
 				this.pipelineSize = this.initialProductPipeline.size()
 			}
-			this.productPipelines[upstream.getWho()] = initialProductPipeline.clone()
+			this.productPipelines[upstream.getWho()] = this.initialProductPipeline.clone()
 		}
 		for (ChainLevel downstream in this.downstreamLevel) {
 			this.ordersReceived[downstream.getWho()] = 4.0

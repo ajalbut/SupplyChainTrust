@@ -12,11 +12,11 @@ import repast.simphony.relogo.schedule.Go
 import repast.simphony.relogo.schedule.Setup
 
 class Customer extends ChainLevel {
-	def setup(x, y, initialStock){
+	def setup(x, y, initialStock, supplyRule, agentsPerLevel){
 		setColor(blue())
 		this.upstreamLevel = retailers()
 		this.downstreamLevel = []
-		super.setup(x, y, initialStock)
+		super.setup(x, y, initialStock, supplyRule, agentsPerLevel)
 	}
 
 	def receiveOrders(){}
@@ -26,9 +26,9 @@ class Customer extends ChainLevel {
 	def makeOrders(){
 		def totalOrderSize
 		if (ticks() > 4) {
-			totalOrderSize = 24.0
+			totalOrderSize = 8.0 * this.agentsPerLevel
 		} else {
-			totalOrderSize = 12.0
+			totalOrderSize = 4.0 * this.agentsPerLevel
 		}
 		this.distributeOrdersToSend(totalOrderSize)
 	}
