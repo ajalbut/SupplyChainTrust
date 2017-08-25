@@ -70,6 +70,34 @@ class UserObserver extends ReLogoObserver{
 		ask(chainLevels()) { refreshTrustLinks(visibility) }
 	}
 
+	def factoriesStock(){
+		def stock = 0
+		ask(factories()){ stock += currentStock - backlog.values().sum()}
+		return stock
+	}
+
+	def distributorsStock(){
+		def stock = 0
+		ask(distributors()){ stock += currentStock - backlog.values().sum()}
+		return stock
+	}
+
+	def wholesalersStock(){
+		def stock = 0
+		ask(wholesalers()){ stock += currentStock - backlog.values().sum()}
+		return stock
+	}
+
+	def retailersStock(){
+		def stock = 0
+		ask(retailers()){ stock += currentStock - backlog.values().sum()}
+		return stock
+	}
+
+	def stepTotalStock() {
+		return factoriesStock() + distributorsStock() + wholesalersStock() + retailersStock()
+	}
+
 	def getGlobalUtility() {
 		def stepUtility = 0
 		ask(factories()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
