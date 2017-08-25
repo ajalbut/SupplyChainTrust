@@ -49,7 +49,6 @@ class ChainLevel extends ReLogoTurtle {
 	def setup(x, y, initialStock){
 		setxy(x,y)
 		setShape("square")
-		setColor(yellow())
 		this.currentStock = initialStock
 
 		for (ChainLevel upstream in this.upstreamLevel) {
