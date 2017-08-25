@@ -241,11 +241,11 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def refreshTrustLinks(visibility) {
-		label = "" + round(100 * this.currentStock) / 100
-		def totalOrdersToFullfill = this.backlog.values().sum()
-		if (totalOrdersToFullfill) {
-			label += " , " + round(100 * totalOrdersToFullfill) / 100
+		def effectiveStock = this.currentStock
+		if (this.backlog.values().sum()) {
+			effectiveStock -= this.backlog.values().sum()
 		}
+		label = "" + round(100 * effectiveStock) / 100
 
 		ask(myOutLinks()){die()}
 		if (visibility == 'upstream') {
