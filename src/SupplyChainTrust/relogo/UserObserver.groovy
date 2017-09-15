@@ -17,18 +17,22 @@ class UserObserver extends ReLogoObserver{
 	def visibility = 'upstream'
 	Parameters p = RunEnvironment.getInstance().getParameters();
 	def supplyRule = p.getValue("supplyRule")
-	def agentsPerLevel = p.getValue("agentsPerLevel")
+	def numberFactories = p.getValue("numberFactories")
+	def numberDistributors = p.getValue("numberDistributors")
+	def numberWholesalers = p.getValue("numberWholesalers")
+	def numberRetailers = p.getValue("numberRetailers")
+	def numberCustomers = p.getValue("numberCustomers")
 	def maxStep = p.getValue("maxStep")
-	
+
 	@Setup
 	def setup(){
 		clearAll()
-		
-		createFactories(this.agentsPerLevel)
-		createDistributors(this.agentsPerLevel)
-		createWholesalers(this.agentsPerLevel)
-		createRetailers(this.agentsPerLevel)
-		createCustomers(this.agentsPerLevel)
+
+		createFactories(this.numberFactories)
+		createDistributors(this.numberDistributors)
+		createWholesalers(this.numberWholesalers)
+		createRetailers(this.numberRetailers)
+		createCustomers(this.numberCustomers)
 
 		def factories = factories()
 		def distributors = distributors()
@@ -37,18 +41,28 @@ class UserObserver extends ReLogoObserver{
 		def customers = customers()
 
 		Random random = new Random()
-		for (def i = 0; i < this.agentsPerLevel; i++) {
-			def xvalue
-			if (this.agentsPerLevel > 1) {
-				xvalue = 24 * (i/(this.agentsPerLevel - 1)) - 12
-			} else {
-				xvalue = 0
-			}
-			ask(factories[i]){ setup(xvalue, 12, randomInitialStock(random), this.supplyRule, this.agentsPerLevel) }
-			ask(distributors[i]){ setup(xvalue, 6, randomInitialStock(random), this.supplyRule, this.agentsPerLevel) }
-			ask(wholesalers[i]){ setup(xvalue, 0 , randomInitialStock(random), this.supplyRule, this.agentsPerLevel) }
-			ask(retailers[i]){ setup(xvalue, -6, randomInitialStock(random), this.supplyRule, this.agentsPerLevel) }
-			ask(customers[i]) { setup(xvalue, -12, 0.0, this.supplyRule, this.agentsPerLevel) }
+		for (def i = 0; i < this.numberFactories; i++) {
+			ask(factories[i]){ setup(this.calculateXValue(i, this.numberFactories), 12, randomInitialStock(random), this.supplyRule, this.numberFactories) }
+		}
+		for (def i = 0; i < this.numberDistributors; i++) {
+			ask(distributors[i]){ setup(this.calculateXValue(i, this.numberDistributors), 6, randomInitialStock(random), this.supplyRule, this.numberDistributors) }
+		}
+		for (def i = 0; i < this.numberWholesalers; i++) {
+			ask(wholesalers[i]){ setup(this.calculateXValue(i, this.numberWholesalers), 0 , randomInitialStock(random), this.supplyRule, this.numberWholesalers) }
+		}
+		for (def i = 0; i < this.numberRetailers; i++) {
+			ask(retailers[i]){ setup(this.calculateXValue(i, this.numberRetailers), -6, randomInitialStock(random), this.supplyRule, this.numberRetailers) }
+		}
+		for (def i = 0; i < this.numberCustomers; i++) {
+			ask(customers[i]) { setup(this.calculateXValue(i, this.numberCustomers), -12, 0.0, this.supplyRule, this.numberCustomers) }
+		}
+	}
+
+	def calculateXValue(count, numberAgents) {
+		if (numberAgents > 1) {
+			return 24 * (count/(numberAgents - 1)) - 12
+		} else {
+			return 0
 		}
 	}
 
@@ -140,9 +154,8 @@ class UserObserver extends ReLogoObserver{
 		ask(retailers()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
 		return stepUtility
 	}
-	
+
 	def randomInitialStock(Random random){
 		return 1.0 * random.nextInt(41)
 	}
-	
 }
