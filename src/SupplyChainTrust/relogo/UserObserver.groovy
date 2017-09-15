@@ -14,16 +14,15 @@ import SupplyChainTrust.ReLogoObserver;
 
 class UserObserver extends ReLogoObserver{
 
-	def visibility = 'upstream'
 	Parameters p = RunEnvironment.getInstance().getParameters();
 	def supplyRule = p.getValue("supplyRule")
 	def agentsPerLevel = p.getValue("agentsPerLevel")
 	def maxStep = p.getValue("maxStep")
-	
+
 	@Setup
 	def setup(){
 		clearAll()
-		
+
 		createFactories(this.agentsPerLevel)
 		createDistributors(this.agentsPerLevel)
 		createWholesalers(this.agentsPerLevel)
@@ -61,19 +60,10 @@ class UserObserver extends ReLogoObserver{
 		ask(chainLevels()){receiveOrders()}
 		ask(chainLevels()){makeOrders()}
 		ask(chainLevels()){updateDownstreamTrust()}
-		ask(chainLevels()){refreshTrustLinks(this.visibility)}
+		ask(chainLevels()){refreshView()}
 		if (ticks() == this.maxStep) {
 			stop()
 		}
-	}
-
-	def toggleTrustVisibility(){
-		if (this.visibility == 'upstream') {
-			this.visibility = 'downstream'
-		} else {
-			this.visibility = 'upstream'
-		}
-		ask(chainLevels()) { refreshTrustLinks(this.visibility) }
 	}
 
 	def distributorsOrdersSent(){
@@ -140,9 +130,8 @@ class UserObserver extends ReLogoObserver{
 		ask(retailers()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
 		return stepUtility
 	}
-	
+
 	def randomInitialStock(Random random){
 		return 1.0 * random.nextInt(41)
 	}
-	
 }

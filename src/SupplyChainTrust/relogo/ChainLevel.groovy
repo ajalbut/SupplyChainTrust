@@ -244,7 +244,7 @@ class ChainLevel extends ReLogoTurtle {
 		return trust
 	}
 
-	def refreshTrustLinks(visibility) {
+	def refreshView() {
 		def effectiveStock = this.currentStock
 		if (this.backlog.values().sum()) {
 			effectiveStock -= this.backlog.values().sum()
@@ -252,17 +252,10 @@ class ChainLevel extends ReLogoTurtle {
 		label = "" + round(100 * effectiveStock) / 100
 
 		ask(myOutLinks()){die()}
-		if (visibility == 'upstream') {
-			for (ChainLevel upstream in this.upstreamLevel) {
-				if(upstream.getWho() != this.getWho()) {
-					def route = createLinkTo(upstream)
-					route.color = scaleColor(red(), this.trustUpstreams[upstream.getWho()], 0.0, maxTrustUpstreams)
-				}
-			}
-		} else if (visibility == 'downstream') {
-			for (ChainLevel downstream in this.downstreamLevel) {
-				def route = createLinkTo(downstream)
-				route.color = scaleColor(blue(), this.trustDownstreams[downstream.getWho()], 0.0, maxTrustDownstreams)
+		for (ChainLevel upstream in this.upstreamLevel) {
+			if(upstream.getWho() != this.getWho()) {
+				def route = createLinkTo(upstream)
+				route.color = scaleColor(red(), this.trustUpstreams[upstream.getWho()], 0.0, maxTrustUpstreams)
 			}
 		}
 	}
