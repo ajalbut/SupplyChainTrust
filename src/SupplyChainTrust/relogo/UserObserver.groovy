@@ -16,6 +16,7 @@ class UserObserver extends ReLogoObserver{
 
 	static Parameters p = RunEnvironment.getInstance().getParameters();
 	static def supplyRule = p.getValue("supplyRule")
+	static def trustRule = p.getValue("trustRule")
 	static def agentsPerLevel = p.getValue("agentsPerLevel")
 	static def maxStep = p.getValue("maxStep")
 	static def random = new Random()
@@ -57,7 +58,7 @@ class UserObserver extends ReLogoObserver{
 		tick()
 		ask(chainLevels()){receiveShipments()}
 		ask(chainLevels()){fillOrders()}
-		ask(chainLevels()){updateUpstreamTrust()}
+		ask(chainLevels()){updateTrust()}
 		ask(chainLevels()){receiveOrders()}
 		ask(chainLevels()){makeOrders()}
 		ask(chainLevels()){refreshView()}
