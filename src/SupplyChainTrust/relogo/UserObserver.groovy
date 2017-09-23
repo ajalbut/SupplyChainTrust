@@ -59,6 +59,7 @@ class UserObserver extends ReLogoObserver{
 		ask(chainLevels()){receiveShipments()}
 		ask(chainLevels()){fillOrders()}
 		ask(chainLevels()){updateTrust()}
+		ask(chainLevels()){decideNextSupplier()}
 		ask(chainLevels()){receiveOrders()}
 		ask(chainLevels()){makeOrders()}
 		ask(chainLevels()){refreshView()}

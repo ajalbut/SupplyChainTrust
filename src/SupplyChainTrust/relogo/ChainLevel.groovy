@@ -31,8 +31,11 @@ class ChainLevel extends ReLogoTurtle {
 	Map ordersSentChecklist = [:]
 	Map shipmentsReceivedChecklist = [:]
 	Map totalOrdersReceived = [:]
+	Map currentShipmentToReceive = [:]
+	Map currentShipmentReceivedOnTime = [:]
 	Map totalShipmentsToReceive = [:]
-	Map totalShipmentsReceivedInTime = [:]
+	Map totalShipmentsReceived = [:]
+	Map totalShipmentsReceivedOnTime = [:]
 
 	Map trustUpstreams = [:]
 	def maxTrustUpstreams = 1.0
@@ -74,8 +77,9 @@ class ChainLevel extends ReLogoTurtle {
 				this.shipmentsReceivedChecklist[upstream.getWho()] = initialShipmentsReceivedChecklist.clone().collect{0.0}
 				this.productPipelines[upstream.getWho()] = this.initialProductPipeline.clone().collect{0.0}
 			}
-			this.totalShipmentsReceivedInTime[upstream.getWho()] = 0.0
 			this.totalShipmentsToReceive[upstream.getWho()] = 0.0
+			this.totalShipmentsReceived[upstream.getWho()] = 0.0
+			this.totalShipmentsReceivedOnTime[upstream.getWho()] = 0.0
 			this.trustUpstreams[upstream.getWho()] = 0.5
 		}
 		for (ChainLevel downstream in this.downstreamLevel) {
@@ -100,14 +104,8 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def fillOrders(){
-		def methodName = 'fillOrdersBy' + this.supplyRule
-		this."$methodName"()
-	}
-
-	def fillOrdersByLargestSumFirst(){
-		def sortedDownstreams = this.downstreamLevel.clone().sort{  a, b ->
-			this.totalOrdersReceived[a.getWho()] <=> this.totalOrdersReceived[b.getWho()]
-		}
+		def methodName = this.supplyRule
+		def sortedDownstreams = this."$methodName"()
 
 		while (sortedDownstreams.size()) {
 			ChainLevel downstream = sortedDownstreams.pop()
@@ -121,6 +119,18 @@ class ChainLevel extends ReLogoTurtle {
 				downstream.productPipelines[this.getWho()].add(0, 0.0)
 				this.backlog[downstream.getWho()] += this.ordersReceived[downstream.getWho()]
 			}
+		}
+	}
+
+	def largestDueOrdersFirst(){
+		return this.downstreamLevel.clone().sort{  a, b ->
+			this.ordersReceived[a.getWho()] + this.backlog[a.getWho()] <=> this.ordersReceived[b.getWho()] + this.backlog[b.getWho()]
+		}
+	}
+
+	def largestAccumulatedOrdersFirst(){
+		return this.downstreamLevel.clone().sort{  a, b ->
+			this.totalOrdersReceived[a.getWho()] <=> this.totalOrdersReceived[b.getWho()]
 		}
 	}
 
@@ -169,21 +179,64 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def updateTrust(){
-		def methodName = 'updateTrustBy' + this.trustRule
+		for (ChainLevel upstream in this.upstreamLevel) {
+			def shipmentToReceive = this.ordersSentChecklist[upstream.getWho()].pop()
+			def shipmentReceived = this.shipmentsReceivedChecklist[upstream.getWho()].pop()
+			this.currentShipmentToReceive[upstream.getWho()] = shipmentToReceive
+			this.currentShipmentReceivedOnTime[upstream.getWho()] = Math.min(shipmentToReceive, shipmentReceived)
+			this.totalShipmentsToReceive[upstream.getWho()] += shipmentToReceive
+			this.totalShipmentsReceived[upstream.getWho()] += shipmentReceived
+			this.totalShipmentsReceivedOnTime[upstream.getWho()] += Math.min(shipmentToReceive, shipmentReceived)
+		}
+
+		def methodName = this.trustRule
 		this."$methodName"()
 	}
 
-	def updateTrustByOnTimeDeliveryRate() {
+	def trustByCurrentOnTimeDeliveryRate() {
 		for (ChainLevel upstream in this.upstreamLevel) {
-			def orderToCheck = this.ordersSentChecklist[upstream.getWho()].pop()
-			def shipmentReceived = this.shipmentsReceivedChecklist[upstream.getWho()].pop()
-			this.totalShipmentsToReceive[upstream.getWho()] += orderToCheck
-			this.totalShipmentsReceivedInTime[upstream.getWho()] += Math.min(orderToCheck, shipmentReceived)
-			this.trustUpstreams[upstream.getWho()] = this.totalShipmentsToReceive[upstream.getWho()] ? this.totalShipmentsReceivedInTime[upstream.getWho()] / this.totalShipmentsToReceive[upstream.getWho()] : 0.5
+			if (this.currentShipmentToReceive[upstream.getWho()]) {
+				this.trustUpstreams[upstream.getWho()] = this.currentShipmentReceivedOnTime[upstream.getWho()] / this.currentShipmentToReceive[upstream.getWho()]
+			}
+		}
+	}
+
+	def trustByAccumulatedOnTimeDeliveryRate() {
+		for (ChainLevel upstream in this.upstreamLevel) {
+			if (this.totalShipmentsToReceive[upstream.getWho()]) {
+				this.trustUpstreams[upstream.getWho()] = this.totalShipmentsReceivedOnTime[upstream.getWho()] / this.totalShipmentsToReceive[upstream.getWho()]
+			}
+		}
+	}
+
+	def trustByAccumulatedDeliveryRate() {
+		for (ChainLevel upstream in this.upstreamLevel) {
+			if (this.totalShipmentsToReceive[upstream.getWho()]) {
+				this.trustUpstreams[upstream.getWho()] = this.totalShipmentsReceived[upstream.getWho()] / this.totalShipmentsToReceive[upstream.getWho()]
+			}
 		}
 	}
 
 	def decideNextSupplier() {
+		def randomFraction = UserObserver.random.nextInt(1000001)/1000000
+		if (randomFraction <= this.trustUpstreams[this.supplier.getWho()]) {
+			return
+		}
+
+		def trustSum = this.trustUpstreams.values().sum()
+		def randomTrustSumFraction = UserObserver.random.nextInt(1000001)/1000000 *	trustSum
+		def trustPartial = 0.0
+		if (trustSum) {
+			for (upstream in this.upstreamLevel) {
+				trustPartial += this.trustUpstreams[upstream.getWho()]
+				if (randomTrustSumFraction <= trustPartial) {
+					this.supplier = upstream
+					return
+				}
+			}
+		} else {
+			this.supplier = this.upstreamLevel[UserObserver.random.nextInt(this.upstreamLevel.size())]
+		}
 	}
 
 	def getStockMinusBackorder() {

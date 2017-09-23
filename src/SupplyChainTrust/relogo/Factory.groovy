@@ -26,6 +26,10 @@ class Factory extends ChainLevel {
 		this.currentStock += this.productPipelines[this.getWho()].pop()
 	}
 
+	def updateTrust(){}
+
+	def decideNextSupplier(){}
+
 	def calculateSupplyLine() {
 		return this.productPipelines[this.getWho()].sum()
 	}
