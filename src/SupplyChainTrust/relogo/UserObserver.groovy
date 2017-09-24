@@ -3,7 +3,6 @@ package SupplyChainTrust.relogo
 import static repast.simphony.relogo.Utility.*;
 import static repast.simphony.relogo.UtilityG.*;
 
-import repast.simphony.engine.environment.RunEnvironment;
 import repast.simphony.parameter.Parameters
 import repast.simphony.relogo.Stop;
 import repast.simphony.relogo.Utility;
@@ -14,23 +13,15 @@ import SupplyChainTrust.ReLogoObserver;
 
 class UserObserver extends ReLogoObserver{
 
-	static Parameters p = RunEnvironment.getInstance().getParameters();
-	static def supplyRule = p.getValue("supplyRule")
-	static def trustRule = p.getValue("trustRule")
-	static def orderSizeRule = p.getValue("orderSizeRule")
-	static def agentsPerLevel = p.getValue("agentsPerLevel")
-	static def maxStep = p.getValue("maxStep")
-	static def random = new Random()
-
 	@Setup
 	def setup(){
 		clearAll()
 
-		createFactories(this.agentsPerLevel)
-		createDistributors(this.agentsPerLevel)
-		createWholesalers(this.agentsPerLevel)
-		createRetailers(this.agentsPerLevel)
-		createCustomers(this.agentsPerLevel)
+		createFactories(agentsPerLevel)
+		createDistributors(agentsPerLevel)
+		createWholesalers(agentsPerLevel)
+		createRetailers(agentsPerLevel)
+		createCustomers(agentsPerLevel)
 
 		def factories = factories()
 		def distributors = distributors()
@@ -38,10 +29,10 @@ class UserObserver extends ReLogoObserver{
 		def retailers = retailers()
 		def customers = customers()
 
-		for (def i = 0; i < this.agentsPerLevel; i++) {
+		for (def i = 0; i < agentsPerLevel; i++) {
 			def xvalue
-			if (this.agentsPerLevel > 1) {
-				xvalue = 24 * (i/(this.agentsPerLevel - 1)) - 12
+			if (agentsPerLevel > 1) {
+				xvalue = 24 * (i/(agentsPerLevel - 1)) - 12
 			} else {
 				xvalue = 0
 			}
@@ -64,7 +55,7 @@ class UserObserver extends ReLogoObserver{
 		ask(chainLevels()){receiveOrders()}
 		ask(chainLevels()){makeOrders()}
 		ask(chainLevels()){refreshView()}
-		if (ticks() == this.maxStep) {
+		if (ticks() == maxStep) {
 			stop()
 		}
 	}
@@ -135,6 +126,6 @@ class UserObserver extends ReLogoObserver{
 	}
 
 	def randomInitialStock(){
-		return 1.0 * this.random.nextInt(41)
+		return 1.0 * random.nextInt(41)
 	}
 }

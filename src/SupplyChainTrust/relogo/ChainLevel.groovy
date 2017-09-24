@@ -17,8 +17,6 @@ class ChainLevel extends ReLogoTurtle {
 	static BETA = 1.0
 	static THETA = 0.5
 
-	def supplyRule
-	def trustRule
 	def desiredStock
 	def currentStock
 	def expectedDemand
@@ -54,13 +52,11 @@ class ChainLevel extends ReLogoTurtle {
 	def setup(x, y, initialStock){
 		setxy(x,y)
 		setShape("square")
-		this.supplyRule = UserObserver.supplyRule
-		this.trustRule = UserObserver.trustRule
 		this.currentStock = initialStock
 		this.desiredStock = 0.0
 		this.expectedDemand = 4.0
 		if (this.upstreamLevel.size()) {
-			this.supplier = this.upstreamLevel[UserObserver.random.nextInt(this.upstreamLevel.size())]
+			this.supplier = this.upstreamLevel[random.nextInt(this.upstreamLevel.size())]
 		}
 	}
 
@@ -104,8 +100,7 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def fillOrders(){
-		def methodName = this.supplyRule
-		def sortedDownstreams = this."$methodName"()
+		def sortedDownstreams = this."$supplyRule"()
 
 		while (sortedDownstreams.size()) {
 			ChainLevel downstream = sortedDownstreams.pop()
@@ -189,8 +184,7 @@ class ChainLevel extends ReLogoTurtle {
 			this.totalShipmentsReceivedOnTime[upstream.getWho()] += Math.min(shipmentToReceive, shipmentReceived)
 		}
 
-		def methodName = this.trustRule
-		this."$methodName"()
+		this."$trustRule"()
 	}
 
 	def trustByCurrentOnTimeDeliveryRate() {
@@ -218,13 +212,13 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def decideNextSupplier() {
-		def randomFraction = UserObserver.random.nextInt(1000001)/1000000
+		def randomFraction = random.nextInt(1000001)/1000000
 		if (randomFraction <= this.trustUpstreams[this.supplier.getWho()]) {
 			return
 		}
 
 		def trustSum = this.trustUpstreams.values().sum()
-		def randomTrustSumFraction = UserObserver.random.nextInt(1000001)/1000000 *	trustSum
+		def randomTrustSumFraction = random.nextInt(1000001)/1000000 *	trustSum
 		def trustPartial = 0.0
 		if (trustSum) {
 			for (upstream in this.upstreamLevel) {
@@ -235,7 +229,7 @@ class ChainLevel extends ReLogoTurtle {
 				}
 			}
 		} else {
-			this.supplier = this.upstreamLevel[UserObserver.random.nextInt(this.upstreamLevel.size())]
+			this.supplier = this.upstreamLevel[random.nextInt(this.upstreamLevel.size())]
 		}
 	}
 
