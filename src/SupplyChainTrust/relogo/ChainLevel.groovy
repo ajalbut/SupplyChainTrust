@@ -12,12 +12,6 @@ import repast.simphony.relogo.schedule.Go
 import repast.simphony.relogo.schedule.Setup
 
 class ChainLevel extends ReLogoTurtle {
-	static RHO = 0.5
-	static ALPHA = 0.5
-	static BETA = 1.0
-	static THETA = 0.5
-
-	def desiredStock
 	def currentStock
 	def expectedDemand
 
@@ -53,7 +47,6 @@ class ChainLevel extends ReLogoTurtle {
 		setxy(x,y)
 		setShape("square")
 		this.currentStock = this.initializeStock()
-		this.desiredStock = 0.0
 		this.expectedDemand = 4.0
 		if (this.upstreamLevel.size()) {
 			this.supplier = this.upstreamLevel[random.nextInt(this.upstreamLevel.size())]
@@ -142,7 +135,7 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def receiveOrders(){
-		this.expectedDemand = this.THETA * this.ordersReceived.values().sum() + (1 - this.THETA) * this.expectedDemand
+		this.expectedDemand = THETA * this.ordersReceived.values().sum() + (1 - THETA) * this.expectedDemand
 		for (ChainLevel downstream in this.downstreamLevel) {
 			def orderReceived = this.orderPipelines[downstream.getWho()].pop()
 			this.ordersReceived[downstream.getWho()] = orderReceived
@@ -168,7 +161,7 @@ class ChainLevel extends ReLogoTurtle {
 	def calculateOrderSize(supplyLine) {
 		def desiredSupplyLine = this.pipelineSize * this.expectedDemand
 		def effectiveStock = this.currentStock - this.backlog.values().sum()
-		def totalOrders = this.expectedDemand + this.ALPHA * (this.desiredStock - effectiveStock + this.BETA * (desiredSupplyLine - supplyLine))
+		def totalOrders = this.expectedDemand + ALPHA * (desiredStock - effectiveStock + BETA * (desiredSupplyLine - supplyLine))
 		return Math.max(0.0, totalOrders)
 	}
 

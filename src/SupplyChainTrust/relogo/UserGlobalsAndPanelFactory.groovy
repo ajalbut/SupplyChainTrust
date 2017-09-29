@@ -14,8 +14,12 @@ public class UserGlobalsAndPanelFactory extends AbstractReLogoGlobalsAndPanelFac
 		addGlobal('orderSizeRule', p.getValue("orderSizeRule"))
 		addGlobal('initialStockRule', p.getValue('initialStockRule'))
 		addGlobal('initialStockValue', p.getValue('initialStockValue'))
+		addGlobal('desiredStock', p.getValue('desiredStock'))
 		addGlobal('agentsPerLevel', p.getValue("agentsPerLevel"))
 		addGlobal('maxStep', p.getValue("maxStep"))
+		addGlobal('ALPHA', p.getValue("ALPHA"))
+		addGlobal('BETA', p.getValue("BETA"))
+		addGlobal('THETA', p.getValue("THETA"))
 		addGlobal('random', new Random())
 	}
 }
