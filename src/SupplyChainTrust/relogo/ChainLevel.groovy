@@ -241,6 +241,14 @@ class ChainLevel extends ReLogoTurtle {
 		return stockMinusBackorder
 	}
 
+	def getTrustInSupplier() {
+		if (this.supplier) {
+			return this.trustUpstreams[this.supplier.getWho()]
+		} else {
+			return -1
+		}
+	}
+
 	def getCurrentTrustFromDownstreams() {
 		def trust = 0.0
 		for (ChainLevel downstream in this.downstreamLevel) {
