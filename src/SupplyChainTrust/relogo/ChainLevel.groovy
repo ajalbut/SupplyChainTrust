@@ -49,15 +49,27 @@ class ChainLevel extends ReLogoTurtle {
 	def initialShipmentsReceivedChecklist = [4.0, 4.0]
 	def pipelineSize = initialProductPipeline.size() + initialOrderPipeline.size()
 
-	def setup(x, y, initialStock){
+	def setup(x, y){
 		setxy(x,y)
 		setShape("square")
-		this.currentStock = initialStock
+		this.currentStock = this.initializeStock()
 		this.desiredStock = 0.0
 		this.expectedDemand = 4.0
 		if (this.upstreamLevel.size()) {
 			this.supplier = this.upstreamLevel[random.nextInt(this.upstreamLevel.size())]
 		}
+	}
+
+	def initializeStock(){
+		return this."$initialStockRule"()
+	}
+
+	def fixedInitialStock(){
+		return 1.0 * initialStockValue
+	}
+
+	def randomInitialStock(){
+		return 1.0 * random.nextInt(initialStockValue + 1)
 	}
 
 	def initializeState() {

@@ -12,10 +12,10 @@ import repast.simphony.relogo.schedule.Go
 import repast.simphony.relogo.schedule.Setup
 
 class Wholesaler extends ChainLevel {
-	def setup(x, y, initialStock){
+	def setup(x, y){
 		setColor(yellow())
 		this.upstreamLevel = distributors()
 		this.downstreamLevel = retailers()
-		super.setup(x, y, initialStock)
+		super.setup(x, y)
 	}
 }

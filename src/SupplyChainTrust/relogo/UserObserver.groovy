@@ -36,11 +36,11 @@ class UserObserver extends ReLogoObserver{
 			} else {
 				xvalue = 0
 			}
-			ask(factories[i]){ setup(xvalue, 12, randomInitialStock())}
-			ask(distributors[i]){ setup(xvalue, 6, randomInitialStock())}
-			ask(wholesalers[i]){ setup(xvalue, 0 , randomInitialStock())}
-			ask(retailers[i]){ setup(xvalue, -6, randomInitialStock())}
-			ask(customers[i]) { setup(xvalue, -12, 0.0)}
+			ask(factories[i]){ setup(xvalue, 12)}
+			ask(distributors[i]){ setup(xvalue, 6)}
+			ask(wholesalers[i]){ setup(xvalue, 0)}
+			ask(retailers[i]){ setup(xvalue, -6)}
+			ask(customers[i]) { setup(xvalue, -12)}
 		}
 		ask(chainLevels()){initializeState()}
 	}
@@ -123,9 +123,5 @@ class UserObserver extends ReLogoObserver{
 		ask(wholesalers()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
 		ask(retailers()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
 		return stepUtility
-	}
-
-	def randomInitialStock(){
-		return 1.0 * random.nextInt(41)
 	}
 }
