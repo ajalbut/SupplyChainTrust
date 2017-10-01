@@ -50,4 +50,12 @@ class Customer extends ChainLevel {
 	def trustBasedOrderSize() {
 		return this.trustUpstreams[this.supplier.getWho()] * 10.0
 	}
+
+	def getEffectiveStock() {
+		return this.currentStock
+	}
+
+	def getUtility() {
+		return 0.0
+	}
 }

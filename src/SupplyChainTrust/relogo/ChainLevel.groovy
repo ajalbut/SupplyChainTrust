@@ -30,8 +30,6 @@ class ChainLevel extends ReLogoTurtle {
 	Map totalShipmentsReceivedOnTime = [:]
 
 	Map trustUpstreams = [:]
-	def maxTrustUpstreams = 1.0
-	def maxTrustDownstreams = 1.0
 
 	def supplier
 	def upstreamLevel
@@ -238,12 +236,20 @@ class ChainLevel extends ReLogoTurtle {
 		}
 	}
 
-	def getStockMinusBackorder() {
-		def stockMinusBackorder = this.currentStock
-		if (this.backlog.values().size()) {
-			stockMinusBackorder -= this.backlog.values().sum()
-		}
-		return stockMinusBackorder
+	def getOrderPipelineSum() {
+		return this.orderPipelines.values().flatten().sum()
+	}
+
+	def getOrdersReceivedSum() {
+		return this.ordersReceived.values().sum()
+	}
+
+	def getEffectiveStock() {
+		return this.currentStock - this.backlog.values().sum()
+	}
+
+	def getUtility() {
+		return 0.5 * this.currentStock + this.backlog.values().sum()
 	}
 
 	def getTrustInSupplier() {
@@ -254,20 +260,8 @@ class ChainLevel extends ReLogoTurtle {
 		}
 	}
 
-	def getCurrentTrustFromDownstreams() {
-		def trust = 0.0
-		for (ChainLevel downstream in this.downstreamLevel) {
-			trust += downstream.trustUpstreams[this.getWho()]
-		}
-		return trust
-	}
-
 	def refreshView() {
-		def effectiveStock = this.currentStock
-		if (this.backlog.values().sum()) {
-			effectiveStock -= this.backlog.values().sum()
-		}
-		this.label = "" + round(100 * effectiveStock) / 100
+		this.label = "" + round(100 * this.getEffectiveStock()) / 100
 
 		ask(myOutLinks()){die()}
 		for (ChainLevel upstream in this.upstreamLevel) {

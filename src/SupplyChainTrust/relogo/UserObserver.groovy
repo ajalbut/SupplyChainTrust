@@ -48,80 +48,64 @@ class UserObserver extends ReLogoObserver{
 	@Go
 	def go(){
 		tick()
-		ask(chainLevels()){receiveShipments()}
-		ask(chainLevels()){fillOrders()}
-		ask(chainLevels()){updateTrust()}
-		ask(chainLevels()){decideNextSupplier()}
-		ask(chainLevels()){receiveOrders()}
-		ask(chainLevels()){makeOrders()}
-		ask(chainLevels()){refreshView()}
+		def chainLevels = chainLevels()
+		ask(chainLevels){receiveShipments()}
+		ask(chainLevels){fillOrders()}
+		ask(chainLevels){updateTrust()}
+		ask(chainLevels){decideNextSupplier()}
+		ask(chainLevels){receiveOrders()}
+		ask(chainLevels){makeOrders()}
+		ask(chainLevels){refreshView()}
 		if (ticks() == maxStep) {
 			stop()
 		}
 	}
 
 	def distributorsOrdersSent(){
-		def orders = 0
-		ask(factories()){ orders += orderPipelines.values().flatten().sum()}
-		return orders
+		return sum(factories().collect{it.getOrderPipelineSum()})
 	}
 
 	def wholesalersOrdersSent(){
-		def orders = 0.0
-		ask(distributors()){ orders += orderPipelines.values().flatten().sum()}
-		return orders
+		return sum(distributors().collect{it.getOrderPipelineSum()})
 	}
 
 	def retailersOrdersSent(){
-		def orders = 0.0
-		ask(wholesalers()){ orders += orderPipelines.values().flatten().sum()}
-		return orders
+		return sum(wholesalers().collect{it.getOrderPipelineSum()})
 	}
 
 	def customersOrdersSent(){
-		def orders = 0.0
-		ask(retailers()){ orders += orderPipelines.values().flatten().sum()}
-		return orders
+		return sum(retailers().collect{it.getOrderPipelineSum()})
 	}
 
-	def stepTotalOrdersSent() {
+	def totalOrdersSent() {
 		return distributorsOrdersSent() + wholesalersOrdersSent() + retailersOrdersSent() + customersOrdersSent()
 	}
 
 	def factoriesStock(){
-		def stock = 0
-		ask(factories()){ stock += currentStock - backlog.values().sum()}
-		return stock
+		return sum(factories().collect{it.getEffectiveStock()})
 	}
 
 	def distributorsStock(){
-		def stock = 0
-		ask(distributors()){ stock += currentStock - backlog.values().sum()}
-		return stock
+		return sum(distributors().collect{it.getEffectiveStock()})
 	}
 
 	def wholesalersStock(){
-		def stock = 0
-		ask(wholesalers()){ stock += currentStock - backlog.values().sum()}
-		return stock
+		return sum(wholesalers().collect{it.getEffectiveStock()})
 	}
 
 	def retailersStock(){
-		def stock = 0
-		ask(retailers()){ stock += currentStock - backlog.values().sum()}
-		return stock
+		return sum(retailers().collect{it.getEffectiveStock()})
 	}
 
-	def stepTotalStock() {
+	def totalStock() {
 		return factoriesStock() + distributorsStock() + wholesalersStock() + retailersStock()
 	}
 
-	def getGlobalUtility() {
-		def stepUtility = 0
-		ask(factories()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
-		ask(distributors()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
-		ask(wholesalers()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
-		ask(retailers()){ stepUtility += 0.5 * currentStock + backlog.values().sum()}
-		return stepUtility
+	def totalUtility() {
+		return sum(chainLevels().collect{it.getUtility()})
+	}
+
+	def receivedCustomerOrders() {
+		return sum(retailers().collect{it.getOrdersReceivedSum()})
 	}
 }
