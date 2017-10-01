@@ -46,4 +46,8 @@ class Customer extends ChainLevel {
 	def randomOrderSize() {
 		return random.nextInt(11) * 1.0
 	}
+
+	def trustBasedOrderSize() {
+		return this.trustUpstreams[this.supplier.getWho()] * 10.0
+	}
 }
