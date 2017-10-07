@@ -28,6 +28,8 @@ class UserObserver extends ReLogoObserver{
 		def wholesalers = wholesalers()
 		def retailers = retailers()
 		def customers = customers()
+		
+		def strategies = [['color': red()],['color': blue()],['color': yellow()]]
 
 		for (def i = 0; i < agentsPerLevel; i++) {
 			def xvalue
@@ -36,11 +38,11 @@ class UserObserver extends ReLogoObserver{
 			} else {
 				xvalue = 0
 			}
-			ask(factories[i]){ setup(xvalue, 12)}
-			ask(distributors[i]){ setup(xvalue, 6)}
-			ask(wholesalers[i]){ setup(xvalue, 0)}
-			ask(retailers[i]){ setup(xvalue, -6)}
-			ask(customers[i]) { setup(xvalue, -12)}
+			ask(factories[i]){ setup(xvalue, 12, strategies[i % strategies.size()])}
+			ask(distributors[i]){ setup(xvalue, 6, strategies[i % strategies.size()])}
+			ask(wholesalers[i]){ setup(xvalue, 0, strategies[i % strategies.size()])}
+			ask(retailers[i]){ setup(xvalue, -6, strategies[i % strategies.size()])}
+			ask(customers[i]) { setup(xvalue, -12, strategies[i % strategies.size()])}
 		}
 		ask(chainLevels()){initializeState()}
 	}

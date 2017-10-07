@@ -41,9 +41,10 @@ class ChainLevel extends ReLogoTurtle {
 	def initialShipmentsReceivedChecklist = [4.0, 4.0]
 	def pipelineSize = initialProductPipeline.size() + initialOrderPipeline.size()
 
-	def setup(x, y){
+	def setup(x, y, strategy){
 		setxy(x,y)
 		setShape("square")
+		setColor(strategy.color)
 		this.currentStock = this.initializeStock()
 		this.expectedDemand = 4.0
 		if (this.upstreamLevel.size()) {
