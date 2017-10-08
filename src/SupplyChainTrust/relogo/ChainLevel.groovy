@@ -12,6 +12,8 @@ import repast.simphony.relogo.schedule.Go
 import repast.simphony.relogo.schedule.Setup
 
 class ChainLevel extends ReLogoTurtle {
+	Strategy strategy
+
 	def currentStock
 	def expectedDemand
 
@@ -41,10 +43,11 @@ class ChainLevel extends ReLogoTurtle {
 	def initialShipmentsReceivedChecklist = [4.0, 4.0]
 	def pipelineSize = initialProductPipeline.size() + initialOrderPipeline.size()
 
-	def setup(x, y, strategy){
+	def setup(x, y, Strategy strategy){
 		setxy(x,y)
 		setShape("square")
 		setColor(strategy.color)
+		this.strategy = strategy
 		this.currentStock = this.initializeStock()
 		this.expectedDemand = 4.0
 		if (this.upstreamLevel.size()) {
@@ -160,7 +163,7 @@ class ChainLevel extends ReLogoTurtle {
 	def calculateOrderSize(supplyLine) {
 		def desiredSupplyLine = this.pipelineSize * this.expectedDemand
 		def effectiveStock = this.currentStock - this.backlog.values().sum()
-		def totalOrders = this.expectedDemand + ALPHA * (desiredStock - effectiveStock + BETA * (desiredSupplyLine - supplyLine))
+		def totalOrders = this.expectedDemand + ALPHA * (this.strategy.desiredStock - effectiveStock + BETA * (desiredSupplyLine - supplyLine))
 		return Math.max(0.0, totalOrders)
 	}
 

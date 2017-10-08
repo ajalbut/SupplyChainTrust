@@ -28,8 +28,11 @@ class UserObserver extends ReLogoObserver{
 		def wholesalers = wholesalers()
 		def retailers = retailers()
 		def customers = customers()
-		
-		def strategies = [['color': red()],['color': blue()],['color': yellow()]]
+
+		def strategies = [
+			new Strategy(name: 'safe', color: blue(), desiredStock: desiredStock),
+			new Strategy(name: 'risky', color: red(), desiredStock: 0.0)
+		]
 
 		for (def i = 0; i < agentsPerLevel; i++) {
 			def xvalue
@@ -101,6 +104,14 @@ class UserObserver extends ReLogoObserver{
 
 	def totalStock() {
 		return factoriesStock() + distributorsStock() + wholesalersStock() + retailersStock()
+	}
+
+	def safeUtility() {
+		return sum(filter({it.strategy.name == 'safe'}, chainLevels()).collect{it.getUtility()})
+	}
+
+	def riskyUtility() {
+		return sum(filter({it.strategy.name == 'risky'}, chainLevels()).collect{it.getUtility()})
 	}
 
 	def totalUtility() {
