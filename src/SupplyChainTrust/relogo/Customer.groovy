@@ -50,6 +50,8 @@ class Customer extends ChainLevel {
 		return this.trustUpstreams[this.supplier.getWho()] * 10.0
 	}
 
+	def calculateSaleMarkup() {}
+
 	def getEffectiveStock() {
 		return this.currentStock
 	}
@@ -57,4 +59,6 @@ class Customer extends ChainLevel {
 	def getUtility() {
 		return 0.0
 	}
+
+	def payStockCosts() {}
 }

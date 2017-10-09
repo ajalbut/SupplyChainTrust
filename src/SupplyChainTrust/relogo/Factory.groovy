@@ -16,6 +16,7 @@ class Factory extends ChainLevel {
 	def setup(x, y, Strategy strategy){
 		this.upstreamLevel = []
 		this.downstreamLevel = distributors()
+		this.minMarkup = productionCost * (1 + minProfit)
 		super.setup(x, y, strategy)
 		this.pipelineSize = this.initialProductPipeline.size()
 		this.productPipelines[this.getWho()] = this.initialProductPipeline.clone()

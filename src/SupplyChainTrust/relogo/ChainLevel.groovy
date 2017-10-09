@@ -17,6 +17,11 @@ class ChainLevel extends ReLogoTurtle {
 	def currentStock
 	def expectedDemand
 
+	def cash
+	def minMarkup
+	def maxMarkup
+	def saleMarkup
+
 	Map backlog = [:]
 	Map productPipelines = [:]
 	Map orderPipelines = [:]
@@ -33,7 +38,7 @@ class ChainLevel extends ReLogoTurtle {
 
 	Map trustUpstreams = [:]
 
-	def supplier
+	ChainLevel supplier
 	def upstreamLevel
 	def downstreamLevel
 
@@ -50,6 +55,10 @@ class ChainLevel extends ReLogoTurtle {
 		this.strategy = strategy
 		this.currentStock = this.initializeStock()
 		this.expectedDemand = 4.0
+		this.cash = 0.0
+		if (this.minMarkup) {
+			this.maxMarkup = this.minMarkup - minProfit + maxProfit
+		}
 		if (this.upstreamLevel.size()) {
 			this.supplier = this.upstreamLevel[random.nextInt(this.upstreamLevel.size())]
 		}
@@ -96,6 +105,7 @@ class ChainLevel extends ReLogoTurtle {
 			this.totalOrdersReceived[downstream.getWho()] = 0.0
 			this.backlog[downstream.getWho()] = 0.0
 		}
+		this.calculateSaleMarkup()
 	}
 
 	def receiveShipments(){
@@ -117,6 +127,7 @@ class ChainLevel extends ReLogoTurtle {
 				downstream.productPipelines[this.getWho()].add(0, shipmentSent)
 				this.backlog[downstream.getWho()] = Math.max(0.0, orderToFill - shipmentSent)
 				this.currentStock -= shipmentSent
+				this.cash -= productionCost * shipmentSent
 			} else {
 				downstream.productPipelines[this.getWho()].add(0, 0.0)
 				this.backlog[downstream.getWho()] += this.ordersReceived[downstream.getWho()]
@@ -172,6 +183,10 @@ class ChainLevel extends ReLogoTurtle {
 		for (ChainLevel upstream in this.upstreamLevel) {
 			if (upstream == this.supplier) {
 				order = orderSize
+				
+				def orderValue = this.supplier.saleMarkup * orderSize
+				this.cash -= orderValue
+				upstream.cash += orderValue
 			} else {
 				order = 0.0
 			}
@@ -240,6 +255,11 @@ class ChainLevel extends ReLogoTurtle {
 		}
 	}
 
+	def calculateSaleMarkup() {
+		def clientCount = filter({this == it.supplier}, this.downstreamLevel).size()
+		this.saleMarkup = this.minMarkup + (this.maxMarkup - this.minMarkup) * clientCount / agentsPerLevel
+	}
+
 	def getOrderPipelineSum() {
 		return this.orderPipelines.values().flatten().sum()
 	}
@@ -264,8 +284,12 @@ class ChainLevel extends ReLogoTurtle {
 		}
 	}
 
+	def payStockCosts() {
+		this.cash -= this.currentStock
+	}
+	
 	def refreshView() {
-		this.label = "" + round(100 * this.getEffectiveStock()) / 100
+		this.label = "" + round(100 * this.getEffectiveStock()) / 100 + "," + round(100 * this.cash) / 100
 
 		ask(myOutLinks()){die()}
 		for (ChainLevel upstream in this.upstreamLevel) {

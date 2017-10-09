@@ -58,8 +58,10 @@ class UserObserver extends ReLogoObserver{
 		ask(chainLevels){fillOrders()}
 		ask(chainLevels){updateTrust()}
 		ask(chainLevels){decideNextSupplier()}
+		ask(chainLevels){calculateSaleMarkup()}
 		ask(chainLevels){receiveOrders()}
 		ask(chainLevels){makeOrders()}
+		ask(chainLevels){payStockCosts()}
 		ask(chainLevels){refreshView()}
 		if (ticks() == maxStep) {
 			stop()
