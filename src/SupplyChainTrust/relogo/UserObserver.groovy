@@ -30,8 +30,8 @@ class UserObserver extends ReLogoObserver{
 		def customers = customers()
 
 		def strategies = [
-			new Strategy(name: 'safe', color: blue(), desiredStock: desiredStock),
-			new Strategy(name: 'risky', color: red(), desiredStock: 0.0)
+			new SafeStrategy(name: 'safe', color: blue(), desiredStock: desiredStock),
+			new RiskyStrategy(name: 'risky', color: red(), desiredStock: 0.0)
 		]
 
 		for (def i = 0; i < agentsPerLevel; i++) {
@@ -122,5 +122,13 @@ class UserObserver extends ReLogoObserver{
 
 	def receivedCustomerOrders() {
 		return sum(retailers().collect{it.getOrdersReceivedSum()})
+	}
+
+	def safeCash() {
+		return sum(filter({it.turtleType != 'Customer' & it.strategy.name == 'safe'}, chainLevels()).collect{it.cash})
+	}
+
+	def riskyCash() {
+		return sum(filter({it.turtleType != 'Customer' & it.strategy.name == 'risky'}, chainLevels()).collect{it.cash})
 	}
 }

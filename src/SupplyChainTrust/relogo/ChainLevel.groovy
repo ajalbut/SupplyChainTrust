@@ -136,13 +136,13 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def largestDueOrdersFirst(){
-		return this.downstreamLevel.clone().sort{  a, b ->
+		return this.downstreamLevel.clone().sort{ ChainLevel a, ChainLevel b ->
 			this.ordersReceived[a.getWho()] + this.backlog[a.getWho()] <=> this.ordersReceived[b.getWho()] + this.backlog[b.getWho()]
 		}
 	}
 
 	def largestAccumulatedOrdersFirst(){
-		return this.downstreamLevel.clone().sort{  a, b ->
+		return this.downstreamLevel.clone().sort{ ChainLevel a, ChainLevel b ->
 			this.totalOrdersReceived[a.getWho()] <=> this.totalOrdersReceived[b.getWho()]
 		}
 	}
@@ -234,25 +234,7 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def decideNextSupplier() {
-		def randomFraction = random.nextInt(1000001)/1000000
-		if (randomFraction <= this.trustUpstreams[this.supplier.getWho()]) {
-			return
-		}
-
-		def trustSum = this.trustUpstreams.values().sum()
-		def randomTrustSumFraction = random.nextInt(1000001)/1000000 *	trustSum
-		def trustPartial = 0.0
-		if (trustSum) {
-			for (upstream in this.upstreamLevel) {
-				trustPartial += this.trustUpstreams[upstream.getWho()]
-				if (randomTrustSumFraction <= trustPartial) {
-					this.supplier = upstream
-					return
-				}
-			}
-		} else {
-			this.supplier = this.upstreamLevel[random.nextInt(this.upstreamLevel.size())]
-		}
+		this.strategy.decideNextSupplier(this)
 	}
 
 	def calculateSaleMarkup() {
@@ -295,7 +277,7 @@ class ChainLevel extends ReLogoTurtle {
 		for (ChainLevel upstream in this.upstreamLevel) {
 			if (upstream == this.supplier) {
 				def route = createLinkTo(upstream)
-				route.color = scaleColor(red(), this.trustUpstreams[upstream.getWho()], 0.0, 1.0)
+				route.color = scaleColor(red(), this.trustUpstreams[upstream.getWho()], -1.0, 1.0)
 			}
 		}
 	}
