@@ -13,6 +13,8 @@ import repast.simphony.relogo.schedule.Setup
 
 @Plural ("Factories")
 class Factory extends ChainLevel {
+	def productionOrder = [4.0]
+
 	def setup(x, y, Strategy strategy){
 		this.upstreamLevel = []
 		this.downstreamLevel = distributors()
@@ -23,6 +25,7 @@ class Factory extends ChainLevel {
 	}
 
 	def receiveShipments(){
+		this.productPipelines[this.getWho()].add(0, this.productionOrder.pop())
 		this.currentStock += this.productPipelines[this.getWho()].pop()
 	}
 
@@ -35,6 +38,6 @@ class Factory extends ChainLevel {
 	}
 
 	def placeOrder(orderSize) {
-		this.productPipelines[this.getWho()].add(0, orderSize)
+		this.productionOrder.add(0, orderSize)
 	}
 }
