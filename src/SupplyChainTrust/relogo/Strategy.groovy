@@ -11,7 +11,11 @@ abstract class Strategy {
 	def color
 	def desiredStock
 
-	def decideNextSupplier() {}
+	def calculateSaleMarkup(ChainLevel self) {}
+
+	def decideNextSupplier(ChainLevel self) {}
+
+	def acceptClient(ChainLevel self) {}
 
 	def chooseRandomSupplier(ChainLevel self, candidates, weights) {
 		def trustSum = 0.0
@@ -57,6 +61,10 @@ class SafeStrategy extends Strategy {
 		}
 	}
 
+	def calculateSaleMarkup(ChainLevel self) {
+		self.saleMarkup = self.minMarkup
+	}
+
 	def acceptClient(ChainLevel self) {
 		return (self.getEffectiveStock() >= 0)
 	}
@@ -79,6 +87,11 @@ class RiskyStrategy extends Strategy {
 				}
 			}
 		}
+	}
+
+	def calculateSaleMarkup(ChainLevel self) {
+		def clientCount = filter({ self == it.supplier }, self.downstreamLevel).size()
+		self.saleMarkup = self.minMarkup + (self.maxMarkup - self.minMarkup) * clientCount / self.agentsPerLevel
 	}
 
 	def acceptClient(ChainLevel self) {

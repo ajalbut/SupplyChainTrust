@@ -186,8 +186,7 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def calculateSaleMarkup() {
-		def clientCount = filter({ this == it.supplier }, this.downstreamLevel).size()
-		this.saleMarkup = this.minMarkup + (this.maxMarkup - this.minMarkup) * clientCount / agentsPerLevel
+		this.strategy.calculateSaleMarkup(this)
 	}
 
 	def decideNextSupplier() {
