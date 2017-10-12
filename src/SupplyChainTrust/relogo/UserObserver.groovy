@@ -29,10 +29,12 @@ class UserObserver extends ReLogoObserver{
 		def retailers = retailers()
 		def customers = customers()
 
-		def strategies = [
-			new SafeStrategy(name: 'safe', color: blue(), desiredStock: desiredStock),
-			new RiskyStrategy(name: 'risky', color: red(), desiredStock: 0.0)
+		def strategyConstructorMap = [
+			'safe': new SafeStrategy(name: 'safe', color: blue(), desiredStock: desiredStock),
+			'risky': new RiskyStrategy(name: 'risky', color: red(), desiredStock: 0.0)
 		]
+		def strategyStringList = strategies.split(',')
+		def strategyList = strategyStringList.collect{strategyConstructorMap[it]}
 
 		for (def i = 0; i < agentsPerLevel; i++) {
 			def xvalue
@@ -41,11 +43,11 @@ class UserObserver extends ReLogoObserver{
 			} else {
 				xvalue = 0
 			}
-			ask(factories[i]){ setup(xvalue, 12, strategies[i % strategies.size()])}
-			ask(distributors[i]){ setup(xvalue, 6, strategies[i % strategies.size()])}
-			ask(wholesalers[i]){ setup(xvalue, 0, strategies[i % strategies.size()])}
-			ask(retailers[i]){ setup(xvalue, -6, strategies[i % strategies.size()])}
-			ask(customers[i]) { setup(xvalue, -12, strategies[i % strategies.size()])}
+			ask(factories[i]){ setup(xvalue, 12, strategyList[i % strategyList.size()])}
+			ask(distributors[i]){ setup(xvalue, 6, strategyList[i % strategyList.size()])}
+			ask(wholesalers[i]){ setup(xvalue, 0, strategyList[i % strategyList.size()])}
+			ask(retailers[i]){ setup(xvalue, -6, strategyList[i % strategyList.size()])}
+			ask(customers[i]) { setup(xvalue, -12, strategyList[i % strategyList.size()])}
 		}
 		ask(chainLevels()){initializeState()}
 	}
@@ -57,8 +59,8 @@ class UserObserver extends ReLogoObserver{
 		ask(chainLevels){receiveShipments()}
 		ask(chainLevels){fillOrders()}
 		ask(chainLevels){updateTrust()}
-		ask(chainLevels){decideNextSupplier()}
 		ask(chainLevels){calculateSaleMarkup()}
+		ask(chainLevels){decideNextSupplier()}
 		ask(chainLevels){receiveOrders()}
 		ask(chainLevels){makeOrders()}
 		ask(chainLevels){payStockCosts()}
@@ -125,10 +127,10 @@ class UserObserver extends ReLogoObserver{
 	}
 
 	def safeCash() {
-		return sum(filter({it.turtleType != 'Customer' & it.strategy.name == 'safe'}, chainLevels()).collect{it.cash})
+		return mean(filter({it.turtleType != 'Customer' & it.strategy.name == 'safe'}, chainLevels()).collect{it.cash})
 	}
 
 	def riskyCash() {
-		return sum(filter({it.turtleType != 'Customer' & it.strategy.name == 'risky'}, chainLevels()).collect{it.cash})
+		return mean(filter({it.turtleType != 'Customer' & it.strategy.name == 'risky'}, chainLevels()).collect{it.cash})
 	}
 }

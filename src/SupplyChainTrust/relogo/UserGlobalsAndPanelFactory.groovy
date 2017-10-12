@@ -18,6 +18,7 @@ public class UserGlobalsAndPanelFactory extends AbstractReLogoGlobalsAndPanelFac
 		addGlobal('minProfit', p.getValue("minProfit"))
 		addGlobal('maxProfit', p.getValue("maxProfit"))
 		addGlobal('maxStep', p.getValue("maxStep"))
+		addGlobal('strategies', p.getValue("strategies"))
 		addGlobal('ALPHA', p.getValue("ALPHA"))
 		addGlobal('BETA', p.getValue("BETA"))
 		addGlobal('THETA', p.getValue("THETA"))
