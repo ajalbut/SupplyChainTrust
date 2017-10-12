@@ -135,66 +135,6 @@ class ChainLevel extends ReLogoTurtle {
 		}
 	}
 
-	def largestDueOrdersFirst(){
-		return this.downstreamLevel.clone().sort{ ChainLevel a, ChainLevel b ->
-			this.ordersReceived[a.getWho()] + this.backlog[a.getWho()] <=> this.ordersReceived[b.getWho()] + this.backlog[b.getWho()]
-		}
-	}
-
-	def largestAccumulatedOrdersFirst(){
-		return this.downstreamLevel.clone().sort{ ChainLevel a, ChainLevel b ->
-			this.totalOrdersReceived[a.getWho()] <=> this.totalOrdersReceived[b.getWho()]
-		}
-	}
-
-	def receiveOrders(){
-		this.expectedDemand = THETA * this.ordersReceived.values().sum() + (1 - THETA) * this.expectedDemand
-		for (ChainLevel downstream in this.downstreamLevel) {
-			def orderReceived = this.orderPipelines[downstream.getWho()].pop()
-			this.ordersReceived[downstream.getWho()] = orderReceived
-		}
-	}
-
-	def makeOrders(){
-		def supplyLine = this.calculateSupplyLine()
-		def orderSize = this.calculateOrderSize(supplyLine)
-		this.placeOrder(orderSize)
-	}
-
-	def calculateSupplyLine() {
-		def supplyLine = 0.0
-		for (ChainLevel upstream in this.upstreamLevel) {
-			supplyLine += this.productPipelines[upstream.getWho()].sum()
-			supplyLine += upstream.backlog[this.getWho()]
-			supplyLine += upstream.ordersReceived[this.getWho()]
-		}
-		return supplyLine
-	}
-
-	def calculateOrderSize(supplyLine) {
-		def desiredSupplyLine = this.pipelineSize * this.expectedDemand
-		def effectiveStock = this.currentStock - this.backlog.values().sum()
-		def totalOrders = this.expectedDemand + ALPHA * (this.strategy.desiredStock - effectiveStock + BETA * (desiredSupplyLine - supplyLine))
-		return Math.max(0.0, totalOrders)
-	}
-
-	def placeOrder(orderSize) {
-		def order
-		for (ChainLevel upstream in this.upstreamLevel) {
-			if (upstream == this.supplier) {
-				order = orderSize
-				
-				def orderValue = this.supplier.saleMarkup * orderSize
-				this.cash -= orderValue
-				upstream.cash += orderValue
-			} else {
-				order = 0.0
-			}
-			upstream.orderPipelines[this.getWho()].add(0,  order)
-			this.ordersSentChecklist[upstream.getWho()].add(0,  order)
-		}
-	}
-
 	def updateTrust(){
 		for (ChainLevel upstream in this.upstreamLevel) {
 			def shipmentToReceive = this.ordersSentChecklist[upstream.getWho()].pop()
@@ -233,13 +173,77 @@ class ChainLevel extends ReLogoTurtle {
 		}
 	}
 
+	def largestDueOrdersFirst(){
+		return this.downstreamLevel.clone().sort{ ChainLevel a, ChainLevel b ->
+			this.ordersReceived[a.getWho()] + this.backlog[a.getWho()] <=> this.ordersReceived[b.getWho()] + this.backlog[b.getWho()]
+		}
+	}
+
+	def largestAccumulatedOrdersFirst(){
+		return this.downstreamLevel.clone().sort{ ChainLevel a, ChainLevel b ->
+			this.totalOrdersReceived[a.getWho()] <=> this.totalOrdersReceived[b.getWho()]
+		}
+	}
+
+	def calculateSaleMarkup() {
+		def clientCount = filter({ this == it.supplier }, this.downstreamLevel).size()
+		this.saleMarkup = this.minMarkup + (this.maxMarkup - this.minMarkup) * clientCount / agentsPerLevel
+	}
+
 	def decideNextSupplier() {
 		this.strategy.decideNextSupplier(this)
 	}
 
-	def calculateSaleMarkup() {
-		def clientCount = filter({this == it.supplier}, this.downstreamLevel).size()
-		this.saleMarkup = this.minMarkup + (this.maxMarkup - this.minMarkup) * clientCount / agentsPerLevel
+	def receiveOrders(){
+		this.expectedDemand = THETA * this.ordersReceived.values().sum() + (1 - THETA) * this.expectedDemand
+		for (ChainLevel downstream in this.downstreamLevel) {
+			def orderReceived = this.orderPipelines[downstream.getWho()].pop()
+			this.ordersReceived[downstream.getWho()] = orderReceived
+		}
+	}
+
+	def makeOrders(){
+		def supplyLine = this.calculateSupplyLine()
+		def orderSize = this.calculateOrderSize(supplyLine)
+		this.placeOrder(orderSize)
+	}
+
+	def calculateSupplyLine() {
+		def supplyLine = 0.0
+		for (ChainLevel upstream in this.upstreamLevel) {
+			supplyLine += this.productPipelines[upstream.getWho()].sum()
+			supplyLine += upstream.backlog[this.getWho()]
+			supplyLine += upstream.ordersReceived[this.getWho()]
+		}
+		return supplyLine
+	}
+
+	def calculateOrderSize(supplyLine) {
+		def desiredSupplyLine = this.pipelineSize * this.expectedDemand
+		def effectiveStock = this.currentStock - this.backlog.values().sum()
+		def totalOrders = this.expectedDemand + ALPHA * (this.strategy.desiredStock - effectiveStock + BETA * (desiredSupplyLine - supplyLine))
+		return Math.max(0.0, totalOrders)
+	}
+
+	def placeOrder(orderSize) {
+		def order
+		for (ChainLevel upstream in this.upstreamLevel) {
+			if (upstream == this.supplier) {
+				order = orderSize
+
+				def orderValue = this.supplier.saleMarkup * orderSize
+				this.cash -= orderValue
+				upstream.cash += orderValue
+			} else {
+				order = 0.0
+			}
+			upstream.orderPipelines[this.getWho()].add(0,  order)
+			this.ordersSentChecklist[upstream.getWho()].add(0,  order)
+		}
+	}
+
+	def payStockCosts() {
+		this.cash -= this.currentStock
 	}
 
 	def getOrderPipelineSum() {
@@ -266,14 +270,10 @@ class ChainLevel extends ReLogoTurtle {
 		}
 	}
 
-	def payStockCosts() {
-		this.cash -= this.currentStock
-	}
-	
 	def refreshView() {
 		this.label = "" + round(100 * this.getEffectiveStock()) / 100 + "," + round(100 * this.cash) / 100
 
-		ask(myOutLinks()){die()}
+		ask(myOutLinks()){ die() }
 		for (ChainLevel upstream in this.upstreamLevel) {
 			if (upstream == this.supplier) {
 				def route = createLinkTo(upstream)
