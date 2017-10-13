@@ -13,7 +13,39 @@ abstract class Strategy {
 
 	def calculateSaleMarkup(ChainLevel self) {}
 
-	def decideNextSupplier(ChainLevel self) {}
+	def decideNextSupplier(ChainLevel self, rule) {
+		def newSupplier
+		def candidates = self.upstreamLevel.clone()
+		while (!newSupplier & candidates.size() != 0) {
+			ChainLevel chosen = this.chooseRandomSupplier(self, candidates, [:])
+			if (chosen.strategy.acceptClient(chosen)) {
+				newSupplier = chosen
+			} else {
+				candidates.remove(chosen)
+			}
+		}
+
+		if (!!newSupplier & !!self.supplier) {
+			if (this."$rule"(self, newSupplier)) {
+				self.supplier = newSupplier
+			} else {
+				def randomFraction = self.random.nextInt(1000001)/1000000
+				if (randomFraction >= self.EPSILON) {
+					self.supplier = newSupplier
+				}
+			}
+		} else if (newSupplier) {
+			self.supplier = newSupplier
+		}
+	}
+
+	def preferredTrustRule(ChainLevel self, ChainLevel newSupplier) {
+		return self.trustUpstreams[newSupplier] > self.trustUpstreams[self.supplier]
+	}
+
+	def preferredPriceRule(ChainLevel self, ChainLevel newSupplier) {
+		return newSupplier.saleMarkup < self.supplier.saleMarkup
+	}
 
 	def acceptClient(ChainLevel self) {}
 
@@ -40,25 +72,7 @@ abstract class Strategy {
 class SafeStrategy extends Strategy {
 
 	def decideNextSupplier(ChainLevel self) {
-		if (self.supplier) {
-			def randomFraction = self.random.nextInt(1000001)/1000000
-			if (randomFraction <= self.trustUpstreams[self.supplier.getWho()]) {
-				return
-			}
-		}
-
-		self.supplier = null
-		def candidates = self.upstreamLevel.clone()
-		def weights = self.trustUpstreams.clone()
-		while (!self.supplier & candidates.size() != 0) {
-			ChainLevel supplier = this.chooseRandomSupplier(self, candidates, weights)
-			if (supplier.strategy.acceptClient(supplier)) {
-				self.supplier = supplier
-			} else {
-				candidates.remove(supplier)
-				weights.remove(supplier.getWho())
-			}
-		}
+		super.decideNextSupplier(self, 'preferredTrustRule')
 	}
 
 	def calculateSaleMarkup(ChainLevel self) {
@@ -73,20 +87,7 @@ class SafeStrategy extends Strategy {
 class RiskyStrategy extends Strategy {
 
 	def decideNextSupplier(ChainLevel self) {
-		self.supplier = null
-		def candidates = self.upstreamLevel.clone().groupBy{it.saleMarkup}.sort()
-		while (!self.supplier & candidates.size() > 0) {
-			def candidateGroup = candidates.take(1).values().flatten()
-			candidates = candidates.drop(1)
-			while (!self.supplier & candidateGroup.size() > 0) {
-				ChainLevel supplier = this.chooseRandomSupplier(self, candidateGroup, [:])
-				if (supplier.strategy.acceptClient(supplier)) {
-					self.supplier = supplier
-				} else {
-					candidateGroup.remove(supplier)
-				}
-			}
-		}
+		super.decideNextSupplier(self, 'preferredPriceRule')
 	}
 
 	def calculateSaleMarkup(ChainLevel self) {
