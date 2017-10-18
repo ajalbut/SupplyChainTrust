@@ -58,12 +58,12 @@ class UserObserver extends ReLogoObserver{
 		def chainLevels = chainLevels()
 		ask(chainLevels){receiveShipments()}
 		ask(chainLevels){fillOrders()}
+		ask(chainLevels){payStockCosts()}
 		ask(chainLevels){updateTrust()}
 		ask(chainLevels){calculateSaleMarkup()}
-		ask(chainLevels){decideNextSupplier()}
 		ask(chainLevels){receiveOrders()}
+		ask(chainLevels){decideNextSupplier()}
 		ask(chainLevels){makeOrders()}
-		ask(chainLevels){payStockCosts()}
 		ask(chainLevels){refreshView()}
 		if (ticks() == maxStep) {
 			stop()
