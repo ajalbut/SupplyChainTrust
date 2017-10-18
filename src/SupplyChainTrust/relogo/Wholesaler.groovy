@@ -15,7 +15,7 @@ class Wholesaler extends ChainLevel {
 	def setup(x, y, Strategy strategy){
 		this.upstreamLevel = distributors()
 		this.downstreamLevel = retailers()
-		this.minMarkup = productionCost * (3 + 2 * maxProfit + minProfit)
+		this.minMarkup = 3 * productionCost + 2 * maxProfit + minProfit
 		super.setup(x, y, strategy)
 	}
 }
