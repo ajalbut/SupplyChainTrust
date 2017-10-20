@@ -111,11 +111,11 @@ class UserObserver extends ReLogoObserver{
 	}
 
 	def safeUtility() {
-		return sum(filter({it.strategy.name == 'safe'}, chainLevels()).collect{it.getUtility()})
+		return mean(filter({it.strategy.name == 'safe'}, chainLevels()).collect{it.getUtility()})
 	}
 
 	def riskyUtility() {
-		return sum(filter({it.strategy.name == 'risky'}, chainLevels()).collect{it.getUtility()})
+		return mean(filter({it.strategy.name == 'risky'}, chainLevels()).collect{it.getUtility()})
 	}
 
 	def totalUtility() {
