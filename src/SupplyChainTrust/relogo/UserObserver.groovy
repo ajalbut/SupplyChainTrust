@@ -33,8 +33,12 @@ class UserObserver extends ReLogoObserver{
 			'safe': new SafeStrategy(name: 'safe', color: blue(), desiredStock: desiredStock),
 			'risky': new RiskyStrategy(name: 'risky', color: red(), desiredStock: 0.0)
 		]
-		def strategyStringList = strategies.split(',')
-		def strategyList = strategyStringList.collect{strategyConstructorMap[it]}
+		def strategyProportionList = strategies.split('_')
+		def strategyList = []
+		for (strategyProportion in strategyProportionList) {
+			def (strategy, proportion) = strategyProportion.split(':')
+			strategyList += Collections.nCopies(proportion.toInteger(), strategyConstructorMap[strategy])
+		}
 
 		for (def i = 0; i < agentsPerLevel; i++) {
 			def xvalue
