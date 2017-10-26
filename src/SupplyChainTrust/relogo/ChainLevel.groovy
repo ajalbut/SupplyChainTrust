@@ -69,7 +69,7 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def fixedInitialStock(){
-		return 1.0 * initialStockValue
+		return 1.0 * this.strategy.desiredStock
 	}
 
 	def randomInitialStock(){
