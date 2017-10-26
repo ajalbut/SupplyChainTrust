@@ -261,6 +261,22 @@ class ChainLevel extends ReLogoTurtle {
 		return 0.5 * this.currentStock + this.backlog.values().sum()
 	}
 
+	def getClientCount() {
+		return filter({it.supplier == this}, this.downstreamLevel).size()
+	}
+
+	def getMeanTrust() {
+		return this.downstreamLevel.collect{it.trustUpstreams[this.getWho()]}.sum()/this.downstreamLevel.size()
+	}
+
+	def getProfitMargin() {
+		if (this.supplier) {
+			return this.saleMarkup - productionCost - this.supplier.saleMarkup
+		} else {
+			return 0.0
+		}
+	}
+
 	def getTrustInSupplier() {
 		if (this.supplier) {
 			return this.trustUpstreams[this.supplier.getWho()]

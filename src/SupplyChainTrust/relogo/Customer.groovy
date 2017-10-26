@@ -60,5 +60,13 @@ class Customer extends ChainLevel {
 		return 0.0
 	}
 
+	def getProfitMargin() {
+		return 0.0
+	}
+
+	def getMeanTrust() {
+		return 0.0
+	}
+
 	def payStockCosts() {}
 }

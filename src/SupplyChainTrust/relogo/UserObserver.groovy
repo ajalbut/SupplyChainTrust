@@ -114,14 +114,6 @@ class UserObserver extends ReLogoObserver{
 		return factoriesStock() + distributorsStock() + wholesalersStock() + retailersStock()
 	}
 
-	def safeUtility() {
-		return mean(filter({it.strategy.name == 'safe'}, chainLevels()).collect{it.getUtility()})
-	}
-
-	def riskyUtility() {
-		return mean(filter({it.strategy.name == 'risky'}, chainLevels()).collect{it.getUtility()})
-	}
-
 	def totalUtility() {
 		return sum(chainLevels().collect{it.getUtility()})
 	}
@@ -131,10 +123,46 @@ class UserObserver extends ReLogoObserver{
 	}
 
 	def safeCash() {
-		return mean(filter({it.turtleType != 'Customer' & it.strategy.name == 'safe'}, chainLevels()).collect{it.cash})
+		return getStrategyIndicator('safe', 'getCash')
 	}
 
 	def riskyCash() {
-		return mean(filter({it.turtleType != 'Customer' & it.strategy.name == 'risky'}, chainLevels()).collect{it.cash})
+		return getStrategyIndicator('risky', 'getCash')
+	}
+
+	def safeUtility() {
+		return getStrategyIndicator('safe', 'getUtility')
+	}
+
+	def riskyUtility() {
+		return getStrategyIndicator('risky', 'getUtility')
+	}
+
+	def safeClientCount() {
+		return getStrategyIndicator('safe', 'getClientCount')
+	}
+
+	def riskyClientCount() {
+		return getStrategyIndicator('risky', 'getClientCount')
+	}
+
+	def safeTrust() {
+		return getStrategyIndicator('safe', 'getMeanTrust')
+	}
+
+	def riskyTrust() {
+		return getStrategyIndicator('risky', 'getMeanTrust')
+	}
+
+	def safeProfitMargin() {
+		return getStrategyIndicator('safe', 'getProfitMargin')
+	}
+
+	def riskyProfitMargin() {
+		return getStrategyIndicator('risky', 'getProfitMargin')
+	}
+
+	def getStrategyIndicator(strategyName, indicatorMethod) {
+		return mean(filter({it.turtleType != 'Customer' & it.strategy.name == strategyName}, chainLevels()).collect{it."$indicatorMethod"()})
 	}
 }

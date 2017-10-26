@@ -40,4 +40,8 @@ class Factory extends ChainLevel {
 	def placeOrder(orderSize) {
 		this.productionOrder.add(0, orderSize)
 	}
+	
+	def getProfitMargin() {
+		return this.saleMarkup - productionCost
+	}
 }
