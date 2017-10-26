@@ -40,7 +40,7 @@ abstract class Strategy {
 	}
 
 	def preferredTrustRule(ChainLevel self, ChainLevel newSupplier) {
-		return self.trustUpstreams[newSupplier] > self.trustUpstreams[self.supplier]
+		return self.trustUpstreams[newSupplier.getWho()] > self.trustUpstreams[self.supplier.getWho()]
 	}
 
 	def preferredPriceRule(ChainLevel self, ChainLevel newSupplier) {
@@ -80,7 +80,7 @@ class SafeStrategy extends Strategy {
 	}
 
 	def acceptClient(ChainLevel self) {
-		return (self.getEffectiveStock() >= 0)
+		return true
 	}
 }
 
@@ -91,8 +91,7 @@ class RiskyStrategy extends Strategy {
 	}
 
 	def calculateSaleMarkup(ChainLevel self) {
-		def clientCount = filter({ self == it.supplier }, self.downstreamLevel).size()
-		self.saleMarkup = self.minMarkup + (self.maxMarkup - self.minMarkup) * clientCount / self.agentsPerLevel
+		self.saleMarkup = self.maxMarkup
 	}
 
 	def acceptClient(ChainLevel self) {
