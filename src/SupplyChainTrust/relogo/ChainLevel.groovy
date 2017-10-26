@@ -44,8 +44,8 @@ class ChainLevel extends ReLogoTurtle {
 
 	def initialProductPipeline = [4.0, 4.0]
 	def initialOrderPipeline = [4.0]
-	def initialOrdersSentChecklist = [4.0, 4.0, 4.0]
-	def initialShipmentsReceivedChecklist = [4.0, 4.0]
+	def initialOrdersSentChecklist = [4.0, 4.0, 4.0, 4.0]
+	def initialShipmentsReceivedChecklist = []
 	def pipelineSize = initialProductPipeline.size() + initialOrderPipeline.size()
 
 	def setup(x, y, Strategy strategy){
