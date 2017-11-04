@@ -53,7 +53,7 @@ class ChainLevel extends ReLogoTurtle {
 		setShape("square")
 		setColor(strategy.color)
 		this.strategy = strategy
-		this.currentStock = this.initializeStock()
+		this.currentStock = 1.0 * this.strategy.desiredStock
 		this.expectedDemand = 4.0
 		this.cash = 0.0
 		if (this.minMarkup) {
@@ -62,18 +62,6 @@ class ChainLevel extends ReLogoTurtle {
 		if (this.upstreamLevel.size()) {
 			this.supplier = this.upstreamLevel[random.nextInt(this.upstreamLevel.size())]
 		}
-	}
-
-	def initializeStock(){
-		return this."$initialStockRule"()
-	}
-
-	def fixedInitialStock(){
-		return 1.0 * this.strategy.desiredStock
-	}
-
-	def randomInitialStock(){
-		return 1.0 * random.nextInt(initialStockValue + 1)
 	}
 
 	def initializeState() {
