@@ -113,7 +113,7 @@ class ChainLevel extends ReLogoTurtle {
 			if (this.currentStock && orderToFill) {
 				def shipmentSent = this.currentStock > orderToFill ? orderToFill : this.currentStock
 				downstream.productPipelines[this.getWho()].add(0, shipmentSent)
-				this.backlog[downstream.getWho()] = Math.max(0.0, orderToFill - shipmentSent)
+				this.backlog[downstream.getWho()] = (orderToFill - shipmentSent).max(0.0)
 				this.currentStock -= shipmentSent
 				this.cash -= productionCost * shipmentSent
 			} else {
@@ -128,10 +128,10 @@ class ChainLevel extends ReLogoTurtle {
 			def shipmentToReceive = this.ordersSentChecklist[upstream.getWho()].pop()
 			def shipmentReceived = this.shipmentsReceivedChecklist[upstream.getWho()].pop()
 			this.currentShipmentToReceive[upstream.getWho()] = shipmentToReceive
-			this.currentShipmentReceivedOnTime[upstream.getWho()] = Math.min(shipmentToReceive, shipmentReceived)
+			this.currentShipmentReceivedOnTime[upstream.getWho()] = shipmentToReceive.min(shipmentReceived)
 			this.totalShipmentsToReceive[upstream.getWho()] += shipmentToReceive
 			this.totalShipmentsReceived[upstream.getWho()] += shipmentReceived
-			this.totalShipmentsReceivedOnTime[upstream.getWho()] += Math.min(shipmentToReceive, shipmentReceived)
+			this.totalShipmentsReceivedOnTime[upstream.getWho()] += shipmentToReceive.min(shipmentReceived)
 		}
 
 		this."$trustRule"()
@@ -209,7 +209,7 @@ class ChainLevel extends ReLogoTurtle {
 		def desiredSupplyLine = this.pipelineSize * this.expectedDemand
 		def effectiveStock = this.currentStock - this.backlog.values().sum()
 		def totalOrders = this.expectedDemand + ALPHA * (this.strategy.desiredStock - effectiveStock + BETA * (desiredSupplyLine - supplyLine))
-		return Math.max(0.0, totalOrders)
+		return totalOrders.max(0.0)
 	}
 
 	def placeOrder(orderSize) {
