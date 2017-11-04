@@ -13,88 +13,63 @@ abstract class Strategy {
 
 	def calculateSaleMarkup(ChainLevel self) {}
 
-	def decideNextSupplier(ChainLevel self, rule) {
-		def newSupplier
-		def candidates = self.upstreamLevel.clone()
-		while (!newSupplier & candidates.size() != 0) {
-			ChainLevel chosen = this.chooseRandomSupplier(self, candidates, [:])
-			if (chosen.strategy.acceptClient(chosen)) {
-				newSupplier = chosen
-			} else {
-				candidates.remove(chosen)
-			}
-		}
-
-		if (!!newSupplier & !!self.supplier) {
-			if (this."$rule"(self, newSupplier)) {
-				self.supplier = newSupplier
-			} else {
-				def randomFraction = self.random.nextInt(1000001)/1000000
-				if (randomFraction >= self.EPSILON) {
-					self.supplier = newSupplier
-				}
-			}
-		} else if (newSupplier) {
+	def applyPreferredRule(ChainLevel self) {
+		def set = self.upstreamLevel.clone()
+		Collections.shuffle(set)
+		def subset = set.take(self.candidatesPerStep)
+		def candidates = self.strategy.getPreferredSupplierCandidates(self, subset)
+		ChainLevel newSupplier = candidates.take(1).values().flatten()[0]
+		if (!self.supplier | self.strategy.acceptNewPreferredSupplier(self, newSupplier)) {
 			self.supplier = newSupplier
-		}
-	}
-
-	def preferredTrustRule(ChainLevel self, ChainLevel newSupplier) {
-		return self.trustUpstreams[newSupplier.getWho()] > self.trustUpstreams[self.supplier.getWho()]
-	}
-
-	def preferredPriceRule(ChainLevel self, ChainLevel newSupplier) {
-		return newSupplier.saleMarkup < self.supplier.saleMarkup
-	}
-
-	def acceptClient(ChainLevel self) {}
-
-	def chooseRandomSupplier(ChainLevel self, candidates, weights) {
-		def trustSum = 0.0
-		if (weights.values()) {
-			trustSum = weights.values().sum()
-		}
-		if (trustSum) {
-			def trustPartial = 0.0
-			def randomTrustSumFraction = self.random.nextInt(1000001)/1000000 *	trustSum
-			for (ChainLevel upstream in candidates) {
-				trustPartial += weights[upstream.getWho()]
-				if (randomTrustSumFraction <= trustPartial) {
-					return upstream
-				}
-			}
 		} else {
-			return candidates[self.random.nextInt(candidates.size())]
+			def randomFraction = self.random.nextInt(1000001)/1000000
+			if (randomFraction >= self.EPSILON) {
+				self.supplier = this.chooseRandomSupplier(self, self.upstreamLevel)
+			}
 		}
+	}
+
+	def getPreferredSupplierCandidates(ChainLevel self) {}
+
+	def acceptNewPreferredSupplier(ChainLevel self, ChainLevel newSupplier) {}
+
+	def chooseRandomSupplier(ChainLevel self, candidates) {
+		return candidates[self.random.nextInt(candidates.size())]
 	}
 }
 
 class SafeStrategy extends Strategy {
-
 	def decideNextSupplier(ChainLevel self) {
-		super.decideNextSupplier(self, 'preferredTrustRule')
+		super.applyPreferredRule(self)
+	}
+
+	def getPreferredSupplierCandidates(ChainLevel self, subset) {
+		return subset.groupBy{self.trustUpstreams[it.getWho()]}.sort{a,b -> b.key <=> a.key}
+	}
+
+	def acceptNewPreferredSupplier(ChainLevel self, ChainLevel newSupplier) {
+		return self.trustUpstreams[newSupplier.getWho()] > self.trustUpstreams[self.supplier.getWho()]
 	}
 
 	def calculateSaleMarkup(ChainLevel self) {
 		self.saleMarkup = self.minMarkup
 	}
-
-	def acceptClient(ChainLevel self) {
-		return true
-	}
 }
 
 class RiskyStrategy extends Strategy {
-
 	def decideNextSupplier(ChainLevel self) {
-		super.decideNextSupplier(self, 'preferredPriceRule')
+		super.applyPreferredRule(self)
+	}
+
+	def getPreferredSupplierCandidates(ChainLevel self, subset) {
+		return subset.groupBy{it.saleMarkup}.sort()
+	}
+
+	def acceptNewPreferredSupplier(ChainLevel self, ChainLevel newSupplier) {
+		return newSupplier.saleMarkup < self.supplier.saleMarkup
 	}
 
 	def calculateSaleMarkup(ChainLevel self) {
 		self.saleMarkup = self.maxMarkup
-	}
-
-	def acceptClient(ChainLevel self) {
-		return true
 	}
 }
