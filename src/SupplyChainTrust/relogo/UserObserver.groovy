@@ -31,7 +31,8 @@ class UserObserver extends ReLogoObserver{
 
 		def strategyConstructorMap = [
 			'safe': new SafeStrategy(name: 'safe', color: blue(), desiredStock: desiredStock),
-			'risky': new RiskyStrategy(name: 'risky', color: red(), desiredStock: 0.0)
+			'risky': new RiskyStrategy(name: 'risky', color: red(), desiredStock: 0.0),
+			'random': new RandomStrategy(name: 'random', color: green(), desiredStock: BigDecimal.valueOf(random.nextFloat()) * desiredStock)
 		]
 		def strategyProportionList = strategies.split('_')
 		def strategyList = []
@@ -121,6 +122,10 @@ class UserObserver extends ReLogoObserver{
 	def riskyCash() {
 		return getStrategyIndicator('risky', 'getCash')
 	}
+	
+	def randomCash() {
+		return getStrategyIndicator('random', 'getCash')
+	}
 
 	def safeUtility() {
 		return getStrategyIndicator('safe', 'getUtility')
@@ -128,6 +133,10 @@ class UserObserver extends ReLogoObserver{
 
 	def riskyUtility() {
 		return getStrategyIndicator('risky', 'getUtility')
+	}
+	
+	def randomUtility() {
+		return getStrategyIndicator('random', 'getUtility')
 	}
 
 	def safeClientCount() {
@@ -138,6 +147,10 @@ class UserObserver extends ReLogoObserver{
 		return getStrategyIndicator('risky', 'getClientCount')
 	}
 
+	def randomClientCount() {
+		return getStrategyIndicator('random', 'getClientCount')
+	}
+	
 	def safeTrust() {
 		return getStrategyIndicator('safe', 'getMeanTrust')
 	}
@@ -146,6 +159,10 @@ class UserObserver extends ReLogoObserver{
 		return getStrategyIndicator('risky', 'getMeanTrust')
 	}
 
+	def randomTrust() {
+		return getStrategyIndicator('random', 'getMeanTrust')
+	}
+	
 	def safeProfitMargin() {
 		return getStrategyIndicator('safe', 'getProfitMargin')
 	}
@@ -154,6 +171,10 @@ class UserObserver extends ReLogoObserver{
 		return getStrategyIndicator('risky', 'getProfitMargin')
 	}
 
+	def randomProfitMargin() {
+		return getStrategyIndicator('random', 'getProfitMargin')
+	}
+	
 	def getStrategyIndicator(strategyName, indicatorMethod) {
 		return mean(filter({it.turtleType != 'Customer' & it.strategy.name == strategyName}, chainLevels()).collect{it."$indicatorMethod"()})
 	}

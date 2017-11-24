@@ -22,7 +22,7 @@ abstract class Strategy {
 		if (!self.supplier | self.strategy.acceptNewPreferredSupplier(self, newSupplier)) {
 			self.supplier = newSupplier
 		} else {
-			def randomFraction = self.random.nextInt(1000001)/1000000
+			def randomFraction = BigDecimal.valueOf(self.random.nextFloat())
 			if (randomFraction >= self.EPSILON) {
 				self.supplier = this.chooseRandomSupplier(self, self.upstreamLevel)
 			}
@@ -71,5 +71,15 @@ class RiskyStrategy extends Strategy {
 
 	def calculateSaleMarkup(ChainLevel self) {
 		self.saleMarkup = self.maxMarkup
+	}
+}
+
+class RandomStrategy extends Strategy {
+	def decideNextSupplier(ChainLevel self) {
+		self.supplier = this.chooseRandomSupplier(self, self.upstreamLevel)
+	}
+
+	def calculateSaleMarkup(ChainLevel self) {
+		self.saleMarkup = self.minMarkup + (self.maxMarkup - self.minMarkup) * BigDecimal.valueOf(self.random.nextFloat())
 	}
 }
