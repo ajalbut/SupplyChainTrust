@@ -75,43 +75,35 @@ class UserObserver extends ReLogoObserver{
 	}
 
 	def distributorsOrdersSent(){
-		return sum(factories().collect{it.getOrderPipelineSum()})
+		return mean(factories().collect{it.getOrderPipelineSum()})
 	}
 
 	def wholesalersOrdersSent(){
-		return sum(distributors().collect{it.getOrderPipelineSum()})
+		return mean(distributors().collect{it.getOrderPipelineSum()})
 	}
 
 	def retailersOrdersSent(){
-		return sum(wholesalers().collect{it.getOrderPipelineSum()})
+		return mean(wholesalers().collect{it.getOrderPipelineSum()})
 	}
 
 	def customersOrdersSent(){
-		return sum(retailers().collect{it.getOrderPipelineSum()})
-	}
-
-	def totalOrdersSent() {
-		return distributorsOrdersSent() + wholesalersOrdersSent() + retailersOrdersSent() + customersOrdersSent()
+		return mean(retailers().collect{it.getOrderPipelineSum()})
 	}
 
 	def factoriesStock(){
-		return sum(factories().collect{it.getEffectiveStock()})
+		return mean(factories().collect{it.getEffectiveStock()})
 	}
 
 	def distributorsStock(){
-		return sum(distributors().collect{it.getEffectiveStock()})
+		return mean(distributors().collect{it.getEffectiveStock()})
 	}
 
 	def wholesalersStock(){
-		return sum(wholesalers().collect{it.getEffectiveStock()})
+		return mean(wholesalers().collect{it.getEffectiveStock()})
 	}
 
 	def retailersStock(){
-		return sum(retailers().collect{it.getEffectiveStock()})
-	}
-
-	def totalStock() {
-		return factoriesStock() + distributorsStock() + wholesalersStock() + retailersStock()
+		return mean(retailers().collect{it.getEffectiveStock()})
 	}
 
 	def totalUtility() {
