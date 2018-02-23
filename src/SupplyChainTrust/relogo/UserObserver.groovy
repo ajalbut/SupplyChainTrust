@@ -60,6 +60,7 @@ class UserObserver extends ReLogoObserver{
 	@Go
 	def go(){
 		tick()
+		def step = ticks()
 		def chainLevels = chainLevels()
 		ask(chainLevels){receiveShipments()}
 		ask(chainLevels){fillOrders()}
@@ -67,10 +68,12 @@ class UserObserver extends ReLogoObserver{
 		ask(chainLevels){updateTrust()}
 		ask(chainLevels){calculateSaleMarkup()}
 		ask(chainLevels){receiveOrders()}
-		ask(chainLevels){decideNextSupplier()}
+		if (step % contractSteps == 0) {
+			ask(chainLevels){decideNextSupplier()}
+		}
 		ask(chainLevels){makeOrders()}
 		ask(chainLevels){refreshView()}
-		if (ticks() == maxStep) {
+		if (step == maxStep) {
 			stop()
 		}
 	}
@@ -122,7 +125,7 @@ class UserObserver extends ReLogoObserver{
 	def riskyCash() {
 		return getStrategyIndicator('risky', 'getCash')
 	}
-	
+
 	def randomCash() {
 		return getStrategyIndicator('random', 'getCash')
 	}
@@ -134,7 +137,7 @@ class UserObserver extends ReLogoObserver{
 	def riskyUtility() {
 		return getStrategyIndicator('risky', 'getUtility')
 	}
-	
+
 	def randomUtility() {
 		return getStrategyIndicator('random', 'getUtility')
 	}
@@ -150,7 +153,7 @@ class UserObserver extends ReLogoObserver{
 	def randomClientCount() {
 		return getStrategyIndicator('random', 'getClientCount')
 	}
-	
+
 	def safeTrust() {
 		return getStrategyIndicator('safe', 'getMeanTrust')
 	}
@@ -162,7 +165,7 @@ class UserObserver extends ReLogoObserver{
 	def randomTrust() {
 		return getStrategyIndicator('random', 'getMeanTrust')
 	}
-	
+
 	def safeProfitMargin() {
 		return getStrategyIndicator('safe', 'getProfitMargin')
 	}
@@ -174,7 +177,7 @@ class UserObserver extends ReLogoObserver{
 	def randomProfitMargin() {
 		return getStrategyIndicator('random', 'getProfitMargin')
 	}
-	
+
 	def getStrategyIndicator(strategyName, indicatorMethod) {
 		return mean(filter({it.turtleType != 'Customer' & it.strategy.name == strategyName}, chainLevels()).collect{it."$indicatorMethod"()})
 	}

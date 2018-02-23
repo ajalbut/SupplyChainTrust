@@ -16,6 +16,7 @@ public class UserGlobalsAndPanelFactory extends AbstractReLogoGlobalsAndPanelFac
 		addGlobal('productionCost', new BigDecimal(p.getValue("productionCost")))
 		addGlobal('minProfit', new BigDecimal(p.getValue("minProfit")))
 		addGlobal('maxProfit', new BigDecimal(p.getValue("maxProfit")))
+		addGlobal('contractSteps', p.getValue("contractSteps"))
 		addGlobal('maxStep', p.getValue("maxStep"))
 		addGlobal('strategies', p.getValue("strategies"))
 		addGlobal('ALPHA', new BigDecimal(p.getValue("ALPHA")))
