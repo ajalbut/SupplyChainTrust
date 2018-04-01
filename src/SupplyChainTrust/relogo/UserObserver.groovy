@@ -69,6 +69,7 @@ class UserObserver extends ReLogoObserver{
 		ask(chainLevels){calculateSaleMarkup()}
 		ask(chainLevels){receiveOrders()}
 		if (step % contractSteps == 0) {
+			ask(chainLevels){updateImages()}
 			ask(chainLevels){decideNextSupplier()}
 		}
 		ask(chainLevels){makeOrders()}

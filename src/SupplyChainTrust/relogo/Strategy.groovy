@@ -18,12 +18,13 @@ abstract class Strategy {
 		Collections.shuffle(set)
 		def subset = set.take(self.candidatesPerStep)
 		def candidates = self.strategy.getPreferredSupplierCandidates(self, subset)
-		ChainLevel newSupplier = candidates.take(1).values().flatten()[0]
-		if (!self.supplier | self.strategy.acceptNewPreferredSupplier(self, newSupplier)) {
+		ChainLevel candidate = candidates.take(1).values().flatten()[0]
+		ChainLevel newSupplier = self.strategy.acceptNewPreferredSupplier(self, candidate)
+		if (newSupplier) {
 			self.supplier = newSupplier
 		} else {
 			def randomFraction = BigDecimal.valueOf(self.random.nextFloat())
-			if (randomFraction >= self.EPSILON) {
+			if (randomFraction >= self.EPSILON2) {
 				self.supplier = this.chooseRandomSupplier(self, self.upstreamLevel)
 			}
 		}
@@ -44,11 +45,25 @@ class SafeStrategy extends Strategy {
 	}
 
 	def getPreferredSupplierCandidates(ChainLevel self, subset) {
+		subset = filter({self.trustUpstreams.containsKey(it.getWho())}, subset)
 		return subset.groupBy{self.trustUpstreams[it.getWho()]}.sort{a,b -> b.key <=> a.key}
 	}
 
 	def acceptNewPreferredSupplier(ChainLevel self, ChainLevel newSupplier) {
-		return self.trustUpstreams[newSupplier.getWho()] > self.trustUpstreams[self.supplier.getWho()]
+		def randomFraction = BigDecimal.valueOf(self.random.nextFloat())
+		if (randomFraction >= self.EPSILON1) {
+			Image image = self.askPeers()
+			if (image && (!newSupplier || image.confidence > self.trustUpstreams[newSupplier.getWho()])) {
+				if (image.confidence > self.trustUpstreams[self.supplier.getWho()]) {
+					self.trustedInformer = image.informer
+					return image.supplier
+				}
+			}
+		}
+
+		if (newSupplier && self.trustUpstreams[newSupplier.getWho()] > self.trustUpstreams[self.supplier.getWho()]) {
+			return newSupplier
+		}
 	}
 
 	def calculateSaleMarkup(ChainLevel self) {
@@ -66,7 +81,9 @@ class RiskyStrategy extends Strategy {
 	}
 
 	def acceptNewPreferredSupplier(ChainLevel self, ChainLevel newSupplier) {
-		return newSupplier.saleMarkup < self.supplier.saleMarkup
+		if (newSupplier.saleMarkup < self.supplier.saleMarkup) {
+			return newSupplier
+		}
 	}
 
 	def calculateSaleMarkup(ChainLevel self) {

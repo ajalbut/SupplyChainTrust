@@ -37,10 +37,14 @@ class ChainLevel extends ReLogoTurtle {
 	Map totalShipmentsReceivedOnTime = [:]
 
 	Map trustUpstreams = [:]
+	Map images = [:]
+	Map trust = [:]
+	def trustedInformer = null
 
 	ChainLevel supplier
 	def upstreamLevel
 	def downstreamLevel
+	def currentLevel
 
 	def initialProductPipeline = [4.0, 4.0]
 	def initialOrderPipeline = [4.0]
@@ -58,6 +62,10 @@ class ChainLevel extends ReLogoTurtle {
 		this.cash = 0.0
 		if (this.minMarkup) {
 			this.maxMarkup = this.minMarkup - minProfit + maxProfit
+		}
+		this.currentLevel = filter({it.turtleType == this.turtleType & it != this}, chainLevels())
+		for (ChainLevel agent in this.currentLevel) {
+			this.trust[agent.getWho()] = true
 		}
 		if (this.upstreamLevel.size()) {
 			this.supplier = this.upstreamLevel[random.nextInt(this.upstreamLevel.size())]
@@ -80,7 +88,7 @@ class ChainLevel extends ReLogoTurtle {
 			this.totalShipmentsToReceive[upstream.getWho()] = 0.0
 			this.totalShipmentsReceived[upstream.getWho()] = 0.0
 			this.totalShipmentsReceivedOnTime[upstream.getWho()] = 0.0
-			this.trustUpstreams[upstream.getWho()] = 0.5
+			this.images[upstream.getWho()] = new Image(supplier: upstream, informer: this)
 		}
 		for (ChainLevel downstream in this.downstreamLevel) {
 			if (this == downstream.supplier) {
@@ -177,7 +185,20 @@ class ChainLevel extends ReLogoTurtle {
 		this.strategy.calculateSaleMarkup(this)
 	}
 
+	def updateImages() {
+		for (item in this.images) {
+			Image image = item.value
+			image.confidence = this.trustUpstreams[image.supplier.getWho()]
+		}
+	}
+
 	def decideNextSupplier() {
+		if (this.trustedInformer) {
+			if (this.trustUpstreams[this.supplier.getWho()] < this.confidenceThreshold) {
+				this.trust[this.trustedInformer.getWho()] = false
+			}
+			this.trustedInformer = null
+		}
 		this.strategy.decideNextSupplier(this)
 	}
 
@@ -233,6 +254,22 @@ class ChainLevel extends ReLogoTurtle {
 		this.cash -= this.currentStock
 	}
 
+	def informImages() {
+		return this.images.findAll{it.value.confidence && it.value.confidence > this.confidenceThreshold}
+	}
+
+	def askPeers() {
+		def images = [:]
+		def reliablePeers = filter({this.trust[it.getWho()] == true}, this.currentLevel)
+		for (ChainLevel peer in reliablePeers) {
+			images += peer.informImages()
+		}
+		def bestImages = images.values().groupBy{it.confidence}.sort{-it.key}.values()[0]
+		if (bestImages) {
+			return bestImages[this.random.nextInt(bestImages.size())]
+		}
+	}
+
 	def getOrderPipelineSum() {
 		return this.orderPipelines.values().flatten().sum()
 	}
@@ -254,7 +291,12 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def getMeanTrust() {
-		return this.downstreamLevel.collect{it.trustUpstreams[this.getWho()]}.sum()/this.downstreamLevel.size()
+		def clients = filter({it.trustUpstreams.containsKey(this.getWho())}, this.downstreamLevel)
+		if (clients) {
+			return clients.collect{it.trustUpstreams[this.getWho()]}.sum()/clients.size()
+		} else {
+			return 0
+		}
 	}
 
 	def getProfitMargin() {
@@ -266,7 +308,7 @@ class ChainLevel extends ReLogoTurtle {
 	}
 
 	def getTrustInSupplier() {
-		if (this.supplier) {
+		if (this.supplier && this.trustUpstreams.containsKey(this.supplier.getWho())) {
 			return this.trustUpstreams[this.supplier.getWho()]
 		} else {
 			return -1
@@ -280,7 +322,9 @@ class ChainLevel extends ReLogoTurtle {
 		for (ChainLevel upstream in this.upstreamLevel) {
 			if (upstream == this.supplier) {
 				def route = createLinkTo(upstream)
-				route.color = scaleColor(red(), this.trustUpstreams[upstream.getWho()], -1.0, 1.0)
+				if (this.trustUpstreams.containsKey(upstream.getWho())) {
+					route.color = scaleColor(red(), this.trustUpstreams[upstream.getWho()], -1.0, 1.0)
+				}
 			}
 		}
 	}
