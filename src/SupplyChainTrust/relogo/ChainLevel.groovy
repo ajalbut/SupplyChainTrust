@@ -189,16 +189,11 @@ class ChainLevel extends ReLogoTurtle {
 		for (item in this.images) {
 			Image image = item.value
 			image.confidence = this.trustUpstreams[image.supplier.getWho()]
+			image.saleMarkup = supplier.saleMarkup
 		}
 	}
 
 	def decideNextSupplier() {
-		if (this.trustedInformer) {
-			if (this.trustUpstreams[this.supplier.getWho()] < this.confidenceThreshold) {
-				this.trust[this.trustedInformer.getWho()] = false
-			}
-			this.trustedInformer = null
-		}
 		this.strategy.decideNextSupplier(this)
 	}
 
@@ -252,22 +247,6 @@ class ChainLevel extends ReLogoTurtle {
 
 	def payStockCosts() {
 		this.cash -= this.currentStock
-	}
-
-	def informImages() {
-		return this.images.findAll{it.value.confidence && it.value.confidence > this.confidenceThreshold}
-	}
-
-	def askPeers() {
-		def images = [:]
-		def reliablePeers = filter({this.trust[it.getWho()] == true}, this.currentLevel)
-		for (ChainLevel peer in reliablePeers) {
-			images += peer.informImages()
-		}
-		def bestImages = images.values().groupBy{it.confidence}.sort{-it.key}.values()[0]
-		if (bestImages) {
-			return bestImages[this.random.nextInt(bestImages.size())]
-		}
 	}
 
 	def getOrderPipelineSum() {

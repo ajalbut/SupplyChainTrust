@@ -37,10 +37,20 @@ abstract class Strategy {
 	def chooseRandomSupplier(ChainLevel self, candidates) {
 		return candidates[self.random.nextInt(candidates.size())]
 	}
+
+	def askPeers(ChainLevel self) {}
+
+	def informImages(ChainLevel self, ChainLevel asker) {}
 }
 
 class SafeStrategy extends Strategy {
 	def decideNextSupplier(ChainLevel self) {
+		if (self.trustedInformer) {
+			if (self.trustUpstreams[self.supplier.getWho()] < self.confidenceThreshold) {
+				self.trust[self.trustedInformer.getWho()] = false
+			}
+			self.trustedInformer = null
+		}
 		super.applyPreferredRule(self)
 	}
 
@@ -52,7 +62,7 @@ class SafeStrategy extends Strategy {
 	def acceptNewPreferredSupplier(ChainLevel self, ChainLevel newSupplier) {
 		def randomFraction = BigDecimal.valueOf(self.random.nextFloat())
 		if (randomFraction >= self.EPSILON1) {
-			Image image = self.askPeers()
+			Image image = this.askPeers(self)
 			if (image && (!newSupplier || image.confidence > self.trustUpstreams[newSupplier.getWho()])) {
 				if (image.confidence > self.trustUpstreams[self.supplier.getWho()]) {
 					self.trustedInformer = image.informer
@@ -66,13 +76,39 @@ class SafeStrategy extends Strategy {
 		}
 	}
 
+	def askPeers(ChainLevel self) {
+		def images = [:]
+		def reliablePeers = filter({self.trust[it.getWho()] == true}, self.currentLevel)
+		for (ChainLevel peer in reliablePeers) {
+			images += this.informImages(peer, self)
+		}
+		def bestImages = images.values().groupBy{it.confidence}.sort{-it.key}.values()[0]
+		if (bestImages) {
+			return bestImages[self.random.nextInt(bestImages.size())]
+		}
+	}
+
+	def informImages(ChainLevel self, ChainLevel asker) {
+		if (self.trust[asker.getWho()] == true) {
+			return self.images.findAll{it.value.confidence && it.value.confidence > self.confidenceThreshold}
+		} else {
+			return [:]
+		}
+	}
+
 	def calculateSaleMarkup(ChainLevel self) {
-		self.saleMarkup = self.minMarkup
+		self.saleMarkup = self.minMarkup + (BigDecimal.valueOf(self.random.nextFloat()) * (1.0 - self.priceOffset)) * (self.maxMarkup - self.minMarkup)
 	}
 }
 
 class RiskyStrategy extends Strategy {
 	def decideNextSupplier(ChainLevel self) {
+		if (self.trustedInformer) {
+			if (self.supplier.saleMarkup > self.priceThreshold) {
+				self.trust[self.trustedInformer.getWho()] = false
+			}
+			self.trustedInformer = null
+		}
 		super.applyPreferredRule(self)
 	}
 
@@ -81,13 +117,44 @@ class RiskyStrategy extends Strategy {
 	}
 
 	def acceptNewPreferredSupplier(ChainLevel self, ChainLevel newSupplier) {
-		if (newSupplier.saleMarkup < self.supplier.saleMarkup) {
+		def randomFraction = BigDecimal.valueOf(self.random.nextFloat())
+		if (randomFraction >= self.EPSILON1) {
+			Image image = this.askPeers(self)
+			if (image && (!newSupplier || image.saleMarkup < newSupplier.saleMarkup)) {
+				if (image.saleMarkup < self.supplier.saleMarkup) {
+					self.trustedInformer = image.informer
+					return image.supplier
+				}
+			}
+		}
+
+		if (newSupplier && newSupplier.saleMarkup < self.supplier.saleMarkup) {
 			return newSupplier
 		}
 	}
 
+	def askPeers(ChainLevel self) {
+		def images = [:]
+		def reliablePeers = filter({self.trust[it.getWho()] == true}, self.currentLevel)
+		for (ChainLevel peer in reliablePeers) {
+			images += this.informImages(peer, self)
+		}
+		def bestImages = images.values().groupBy{it.saleMarkup}.sort{it.key}.values()[0]
+		if (bestImages) {
+			return bestImages[self.random.nextInt(bestImages.size())]
+		}
+	}
+
+	def informImages(ChainLevel self, ChainLevel asker) {
+		if (self.trust[asker.getWho()] == true) {
+			return self.images.findAll{it.value.saleMarkup && it.value.saleMarkup < self.supplier.minMarkup + self.priceThreshold * (self.supplier.maxMarkup - self.supplier.minMarkup)}
+		} else {
+			return [:]
+		}
+	}
+
 	def calculateSaleMarkup(ChainLevel self) {
-		self.saleMarkup = self.maxMarkup
+		self.saleMarkup = self.minMarkup + (self.priceOffset + BigDecimal.valueOf(self.random.nextFloat()) * (1.0 - self.priceOffset)) * (self.maxMarkup - self.minMarkup)
 	}
 }
 
