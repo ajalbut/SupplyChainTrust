@@ -40,6 +40,7 @@ class ChainLevel extends ReLogoTurtle {
 	Map images = [:]
 	Map trust = [:]
 	def trustedInformer = null
+	def liar = false
 
 	ChainLevel supplier
 	def upstreamLevel
@@ -69,6 +70,11 @@ class ChainLevel extends ReLogoTurtle {
 		}
 		if (this.upstreamLevel.size()) {
 			this.supplier = this.upstreamLevel[random.nextInt(this.upstreamLevel.size())]
+		}
+
+		def fraction = random.nextFloat()
+		if (fraction < liarChance) {
+			this.liar = true
 		}
 	}
 
@@ -188,8 +194,15 @@ class ChainLevel extends ReLogoTurtle {
 	def updateImages() {
 		for (item in this.images) {
 			Image image = item.value
-			image.confidence = this.trustUpstreams[image.supplier.getWho()]
-			image.saleMarkup = supplier.saleMarkup
+			if (this.liar) {
+				if (this.trustUpstreams.containsKey(image.supplier.getWho())) {
+					image.confidence = 1.0 - this.trustUpstreams[image.supplier.getWho()]
+				}
+				image.saleMarkup = supplier.minMarkup + supplier.maxMarkup - supplier.saleMarkup
+			} else {
+				image.confidence = this.trustUpstreams[image.supplier.getWho()]
+				image.saleMarkup = supplier.saleMarkup
+			}
 		}
 	}
 
