@@ -291,6 +291,12 @@ class ChainLevel extends ReLogoTurtle {
 		}
 	}
 
+	def getTrustedPeersRatio() {
+		def trustedPeers = filter({this.trust[it.getWho()] == true}, this.currentLevel).size()
+		def totalPeers = this.currentLevel.size()
+		return trustedPeers / totalPeers
+	}
+
 	def getProfitMargin() {
 		if (this.supplier) {
 			return this.saleMarkup - productionCost - this.supplier.saleMarkup
