@@ -53,7 +53,7 @@ class ChainLevel extends ReLogoTurtle {
 	def initialShipmentsReceivedChecklist = []
 	def pipelineSize = initialProductPipeline.size() + initialOrderPipeline.size()
 
-	def setup(x, y, Strategy strategy){
+	def setup(x, y, Strategy strategy, liar){
 		setxy(x,y)
 		setShape("square")
 		setColor(strategy.color)
@@ -72,10 +72,7 @@ class ChainLevel extends ReLogoTurtle {
 			this.supplier = this.upstreamLevel[random.nextInt(this.upstreamLevel.size())]
 		}
 
-		def fraction = random.nextFloat()
-		if (fraction < liarChance) {
-			this.liar = true
-		}
+		this.liar = liar
 	}
 
 	def initializeState() {

@@ -48,11 +48,11 @@ class UserObserver extends ReLogoObserver{
 			} else {
 				xvalue = 0
 			}
-			ask(factories[i]){ setup(xvalue, 12, strategyList[i % strategyList.size()])}
-			ask(distributors[i]){ setup(xvalue, 6, strategyList[i % strategyList.size()])}
-			ask(wholesalers[i]){ setup(xvalue, 0, strategyList[i % strategyList.size()])}
-			ask(retailers[i]){ setup(xvalue, -6, strategyList[i % strategyList.size()])}
-			ask(customers[i]) { setup(xvalue, -12, strategyList[i % strategyList.size()])}
+			ask(factories[i]){ setup(xvalue, 12, strategyList[i % strategyList.size()], i < agentsPerLevel * liarChance)}
+			ask(distributors[i]){ setup(xvalue, 6, strategyList[i % strategyList.size()], i < agentsPerLevel * liarChance)}
+			ask(wholesalers[i]){ setup(xvalue, 0, strategyList[i % strategyList.size()], i < agentsPerLevel * liarChance)}
+			ask(retailers[i]){ setup(xvalue, -6, strategyList[i % strategyList.size()], i < agentsPerLevel * liarChance)}
+			ask(customers[i]) { setup(xvalue, -12, strategyList[i % strategyList.size()], i < agentsPerLevel * liarChance)}
 		}
 		ask(chainLevels()){initializeState()}
 	}

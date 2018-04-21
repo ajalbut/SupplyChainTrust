@@ -15,11 +15,11 @@ import repast.simphony.relogo.schedule.Setup
 class Factory extends ChainLevel {
 	def productionOrder = [4.0]
 
-	def setup(x, y, Strategy strategy){
+	def setup(x, y, Strategy strategy, liar){
 		this.upstreamLevel = []
 		this.downstreamLevel = distributors()
 		this.minMarkup = productionCost + minProfit
-		super.setup(x, y, strategy)
+		super.setup(x, y, strategy, liar)
 		this.pipelineSize = this.initialProductPipeline.size()
 		this.productPipelines[this.getWho()] = this.initialProductPipeline.clone()
 	}
@@ -31,6 +31,8 @@ class Factory extends ChainLevel {
 
 	def updateTrust(){}
 
+	def updateImages(){}
+
 	def decideNextSupplier(){}
 
 	def calculateSupplyLine() {
@@ -40,7 +42,7 @@ class Factory extends ChainLevel {
 	def placeOrder(orderSize) {
 		this.productionOrder.add(0, orderSize)
 	}
-	
+
 	def getProfitMargin() {
 		return this.saleMarkup - productionCost
 	}
