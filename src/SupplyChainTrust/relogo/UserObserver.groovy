@@ -179,6 +179,30 @@ class UserObserver extends ReLogoObserver{
 		return getStrategyIndicator('random', 'getProfitMargin')
 	}
 
+	def sincereTrust() {
+		return getSincereLiarIndicator(true, 'getMeanTrust')
+	}
+
+	def liarTrust() {
+		return getSincereLiarIndicator(false, 'getMeanTrust')
+	}
+
+	def safeSincereTrust() {
+		return getStrategySincereLiarIndicator('safe', true, 'getMeanTrust')
+	}
+
+	def riskySincereTrust() {
+		return getStrategySincereLiarIndicator('risky', true, 'getMeanTrust')
+	}
+
+	def safeLiarTrust() {
+		return getStrategySincereLiarIndicator('safe', false, 'getMeanTrust')
+	}
+
+	def riskyLiarTrust() {
+		return getStrategySincereLiarIndicator('risky', false, 'getMeanTrust')
+	}
+
 	def sincereCash() {
 		return getSincereLiarIndicator(true, 'getCash')
 	}
