@@ -290,10 +290,10 @@ class ChainLevel extends ReLogoTurtle {
 		}
 	}
 
-	def getTrustedPeersRatio() {
-		def trustedPeers = filter({this.trust[it.getWho()] == true}, this.currentLevel).size()
+	def getPeerTrustRatio() {
+		def trustingPeers = filter({it.trust[this.getWho()] == true}, this.currentLevel).size()
 		def totalPeers = this.currentLevel.size()
-		return trustedPeers / totalPeers
+		return trustingPeers / totalPeers
 	}
 
 	def getProfitMargin() {

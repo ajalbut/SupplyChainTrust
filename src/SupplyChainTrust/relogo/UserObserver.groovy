@@ -227,8 +227,28 @@ class UserObserver extends ReLogoObserver{
 		return getStrategySincereLiarIndicator('risky', false, 'getCash')
 	}
 
-	def trustedPeersRatio() {
-		return mean(filter({it.turtleType != 'Factory'}, chainLevels()).collect{it.getTrustedPeersRatio()})
+	def safePeerTrustRatio() {
+		return getStrategyIndicator('safe', 'getPeerTrustRatio')
+	}
+
+	def riskyPeerTrustRatio() {
+		return getStrategyIndicator('risky', 'getPeerTrustRatio')
+	}
+
+	def safeSincerePeerTrustRatio() {
+		return getStrategySincereLiarIndicator('safe', true, 'getPeerTrustRatio')
+	}
+
+	def riskySincerePeerTrustRatio() {
+		return getStrategySincereLiarIndicator('risky', true, 'getPeerTrustRatio')
+	}
+
+	def safeLiarPeerTrustRatio() {
+		return getStrategySincereLiarIndicator('safe', false, 'getPeerTrustRatio')
+	}
+
+	def riskyLiarPeerTrustRatio() {
+		return getStrategySincereLiarIndicator('risky', false, 'getPeerTrustRatio')
 	}
 
 	def getStrategyIndicator(strategyName, indicatorMethod) {
