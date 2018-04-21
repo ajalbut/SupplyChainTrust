@@ -64,7 +64,7 @@ class ChainLevel extends ReLogoTurtle {
 		if (this.minMarkup) {
 			this.maxMarkup = this.minMarkup - minProfit + maxProfit
 		}
-		this.currentLevel = filter({it.turtleType == this.turtleType & it != this}, chainLevels())
+		this.currentLevel = filter({it.turtleType == this.turtleType && it != this}, chainLevels())
 		for (ChainLevel agent in this.currentLevel) {
 			this.trust[agent.getWho()] = true
 		}

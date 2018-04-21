@@ -232,14 +232,14 @@ class UserObserver extends ReLogoObserver{
 	}
 
 	def getStrategyIndicator(strategyName, indicatorMethod) {
-		return mean(filter({it.turtleType != 'Customer' & it.strategy.name == strategyName}, chainLevels()).collect{it."$indicatorMethod"()})
+		return mean(filter({it.turtleType != 'Customer' && it.strategy.name == strategyName}, chainLevels()).collect{it."$indicatorMethod"()})
 	}
 
 	def getSincereLiarIndicator(sincere, indicatorMethod) {
-		return mean(filter({it.turtleType != 'Customer' & it.liar == !sincere}, chainLevels()).collect{it."$indicatorMethod"()})
+		return mean(filter({it.turtleType != 'Customer' && it.liar == !sincere}, chainLevels()).collect{it."$indicatorMethod"()})
 	}
 
 	def getStrategySincereLiarIndicator(strategyName, sincere, indicatorMethod) {
-		return mean(filter({it.turtleType != 'Customer' & it.strategy.name == strategyName & it.liar == !sincere}, chainLevels()).collect{it."$indicatorMethod"()})
+		return mean(filter({it.turtleType != 'Customer' && it.strategy.name == strategyName && it.liar == !sincere}, chainLevels()).collect{it."$indicatorMethod"()})
 	}
 }
