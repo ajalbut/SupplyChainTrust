@@ -46,7 +46,7 @@ abstract class Strategy {
 class SafeStrategy extends Strategy {
 	def decideNextSupplier(ChainLevel self) {
 		if (self.trustedInformer) {
-			if (self.trustUpstreams[self.supplier.getWho()] < self.confidenceThreshold) {
+			if (self.trustUpstreams.containsKey(self.supplier.getWho()) && self.trustUpstreams[self.supplier.getWho()] < self.confidenceThreshold) {
 				self.trust[self.trustedInformer.getWho()] = false
 			}
 			self.trustedInformer = null
@@ -104,7 +104,7 @@ class SafeStrategy extends Strategy {
 class RiskyStrategy extends Strategy {
 	def decideNextSupplier(ChainLevel self) {
 		if (self.trustedInformer) {
-			if (self.supplier.saleMarkup > self.priceThreshold) {
+			if (self.supplier.saleMarkup > self.supplier.minMarkup + self.priceThreshold * (self.supplier.maxMarkup - self.supplier.minMarkup)) {
 				self.trust[self.trustedInformer.getWho()] = false
 			}
 			self.trustedInformer = null

@@ -191,14 +191,16 @@ class ChainLevel extends ReLogoTurtle {
 	def updateImages() {
 		for (item in this.images) {
 			Image image = item.value
-			if (this.liar) {
-				if (this.trustUpstreams.containsKey(image.supplier.getWho())) {
-					image.confidence = 1.0 - this.trustUpstreams[image.supplier.getWho()]
+			if (this.supplier == image.supplier) {
+				if (this.liar) {
+					if (this.trustUpstreams.containsKey(image.supplier.getWho())) {
+						image.confidence = 1.0 - this.trustUpstreams[image.supplier.getWho()]
+					}
+					image.saleMarkup = supplier.minMarkup + supplier.maxMarkup - supplier.saleMarkup
+				} else {
+					image.confidence = this.trustUpstreams[image.supplier.getWho()]
+					image.saleMarkup = supplier.saleMarkup
 				}
-				image.saleMarkup = supplier.minMarkup + supplier.maxMarkup - supplier.saleMarkup
-			} else {
-				image.confidence = this.trustUpstreams[image.supplier.getWho()]
-				image.saleMarkup = supplier.saleMarkup
 			}
 		}
 	}
