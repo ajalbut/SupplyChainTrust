@@ -27,7 +27,6 @@ public class UserGlobalsAndPanelFactory extends AbstractReLogoGlobalsAndPanelFac
 		addGlobal('BETA', new BigDecimal(p.getValue("BETA")))
 		addGlobal('THETA', new BigDecimal(p.getValue("THETA")))
 		addGlobal('EPSILON1', new BigDecimal(p.getValue("EPSILON1")))
-		addGlobal('EPSILON2', new BigDecimal(p.getValue("EPSILON2")))
 		addGlobal('random', new Random())
 	}
 }

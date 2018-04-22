@@ -14,25 +14,28 @@ abstract class Strategy {
 	def calculateSaleMarkup(ChainLevel self) {}
 
 	def applyPreferredRule(ChainLevel self) {
+		def recommendedSupplier = self.strategy.acceptRecommendedSupplier(self)
+		if (recommendedSupplier) {
+			self.supplier = recommendedSupplier
+			return
+		}
+
 		def set = self.upstreamLevel.clone()
 		Collections.shuffle(set)
 		def subset = set.take(self.candidatesPerStep)
 		def candidates = self.strategy.getPreferredSupplierCandidates(self, subset)
 		ChainLevel candidate = candidates.take(1).values().flatten()[0]
-		ChainLevel newSupplier = self.strategy.acceptNewPreferredSupplier(self, candidate)
-		if (newSupplier) {
-			self.supplier = newSupplier
-		} else {
-			def randomFraction = BigDecimal.valueOf(self.random.nextFloat())
-			if (randomFraction >= self.EPSILON2) {
-				self.supplier = this.chooseRandomSupplier(self, self.upstreamLevel)
-			}
+		ChainLevel exploredSupplier = self.strategy.acceptExploredSupplier(self, candidate)
+		if (exploredSupplier) {
+			self.supplier = exploredSupplier
 		}
 	}
 
 	def getPreferredSupplierCandidates(ChainLevel self) {}
 
-	def acceptNewPreferredSupplier(ChainLevel self, ChainLevel newSupplier) {}
+	def acceptRecommendedSupplier(ChainLevel self) {}
+
+	def acceptExploredSupplier(ChainLevel self, ChainLevel newSupplier) {}
 
 	def chooseRandomSupplier(ChainLevel self, candidates) {
 		return candidates[self.random.nextInt(candidates.size())]
@@ -59,29 +62,27 @@ class SafeStrategy extends Strategy {
 		return subset.groupBy{self.trustUpstreams[it.getWho()]}.sort{a,b -> b.key <=> a.key}
 	}
 
-	def acceptNewPreferredSupplier(ChainLevel self, ChainLevel newSupplier) {
+	def acceptRecommendedSupplier(ChainLevel self) {
 		def randomFraction = BigDecimal.valueOf(self.random.nextFloat())
 		if (randomFraction >= self.EPSILON1) {
 			Image image = this.askPeers(self)
-			if (image && (!newSupplier || image.confidence > self.trustUpstreams[newSupplier.getWho()])) {
-				if (image.confidence > self.trustUpstreams[self.supplier.getWho()]) {
-					self.trustedInformer = image.informer
-					return image.supplier
-				}
+			if (image && image.confidence > self.trustUpstreams[self.supplier.getWho()]) {
+				self.trustedInformer = image.informer
+				return image.supplier
 			}
 		}
+	}
 
+	def acceptExploredSupplier(ChainLevel self, ChainLevel newSupplier) {
 		if (newSupplier && self.trustUpstreams[newSupplier.getWho()] > self.trustUpstreams[self.supplier.getWho()]) {
 			return newSupplier
 		}
 	}
 
 	def askPeers(ChainLevel self) {
-		def images = [:]
 		def reliablePeers = filter({self.trust[it.getWho()] == true}, self.currentLevel)
-		for (ChainLevel peer in reliablePeers) {
-			images += this.informImages(peer, self)
-		}
+		ChainLevel peer = reliablePeers[self.random.nextInt(reliablePeers.size())]
+		def images = this.informImages(peer, self)
 		def bestImages = images.values().groupBy{it.confidence}.sort{-it.key}.values()[0]
 		if (bestImages) {
 			return bestImages[self.random.nextInt(bestImages.size())]
@@ -116,29 +117,27 @@ class RiskyStrategy extends Strategy {
 		return subset.groupBy{it.saleMarkup}.sort()
 	}
 
-	def acceptNewPreferredSupplier(ChainLevel self, ChainLevel newSupplier) {
+	def acceptRecommendedSupplier(ChainLevel self) {
 		def randomFraction = BigDecimal.valueOf(self.random.nextFloat())
 		if (randomFraction >= self.EPSILON1) {
 			Image image = this.askPeers(self)
-			if (image && (!newSupplier || image.saleMarkup < newSupplier.saleMarkup)) {
-				if (image.saleMarkup < self.supplier.saleMarkup) {
-					self.trustedInformer = image.informer
-					return image.supplier
-				}
+			if (image && image.saleMarkup < self.supplier.saleMarkup) {
+				self.trustedInformer = image.informer
+				return image.supplier
 			}
 		}
+	}
 
+	def acceptExploredSupplier(ChainLevel self, ChainLevel newSupplier) {
 		if (newSupplier && newSupplier.saleMarkup < self.supplier.saleMarkup) {
 			return newSupplier
 		}
 	}
 
 	def askPeers(ChainLevel self) {
-		def images = [:]
 		def reliablePeers = filter({self.trust[it.getWho()] == true}, self.currentLevel)
-		for (ChainLevel peer in reliablePeers) {
-			images += this.informImages(peer, self)
-		}
+		ChainLevel peer = reliablePeers[self.random.nextInt(reliablePeers.size())]
+		def images = this.informImages(peer, self)
 		def bestImages = images.values().groupBy{it.saleMarkup}.sort{it.key}.values()[0]
 		if (bestImages) {
 			return bestImages[self.random.nextInt(bestImages.size())]
